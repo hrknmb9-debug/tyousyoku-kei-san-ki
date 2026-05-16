@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>IRO-HACK | 職人向け逆引き調色計算</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontSize: {
+            'field': ['1.35rem', { lineHeight: '1.6' }],
+            'hero': ['2.75rem', { lineHeight: '1.1' }],
+            'mega': ['3.5rem', { lineHeight: '1' }],
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    html { -webkit-tap-highlight-color: transparent; }
+    input[type="number"]::-webkit-inner-spin-button { opacity: 1; height: 2.5rem; }
+    .suggest-item:active { background: #334155; }
+    .lab-swatch { box-shadow: inset 0 0 0 2px rgba(255,255,255,.15); }
+    @media (max-width: 640px) {
+      .text-mega { font-size: 2.5rem; }
+    }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen font-sans antialiased">
+
+  <!-- Header -->
+  <header class="border-b border-slate-700 bg-slate-950/80 sticky top-0 z-40 backdrop-blur-sm px-4 py-4">
+    <div class="flex items-center gap-3 max-w-lg mx-auto">
+      <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center text-slate-900 font-black text-lg shrink-0">IH</div>
+      <div>
+        <h1 class="text-2xl font-black tracking-tight text-amber-400">IRO-HACK</h1>
+        <p class="text-sm text-slate-400 font-medium">建築塗料 逆引き調色計算</p>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-lg mx-auto px-4 py-6 space-y-6 pb-28">
+
+    <!-- Manufacturer legend -->
+    <section class="grid grid-cols-3 gap-2 text-center text-xs font-bold">
+      <div class="bg-blue-950 border border-blue-700 rounded-lg py-2 px-1 text-blue-300">日本ペイント<br><span class="text-blue-400/70">ND色</span></div>
+      <div class="bg-green-950 border border-green-700 rounded-lg py-2 px-1 text-green-300">関西ペイント<br><span class="text-green-400/70">KP色</span></div>
+      <div class="bg-purple-950 border border-purple-700 rounded-lg py-2 px-1 text-purple-300">エスケー化研<br><span class="text-purple-400/70">OSR・淡彩</span></div>
+    </section>
+
+    <!-- Current paint -->
+    <section class="space-y-2">
+      <label class="block text-field font-bold text-amber-300">① 現状の塗料</label>
+      <div class="relative" id="current-search-wrap">
+        <input
+          type="text"
+          id="current-input"
+          autocomplete="off"
+          placeholder="例: ND-155 / KP851 / osr415"
+          class="w-full text-field font-mono bg-slate-800 border-2 border-slate-600 focus:border-amber-400 rounded-xl px-4 py-4 outline-none transition"
+        />
+        <div id="current-suggest" class="hidden absolute z-50 w-full mt-1 bg-slate-800 border-2 border-slate-600 rounded-xl max-h-64 overflow-y-auto shadow-2xl"></div>
+      </div>
+      <div id="current-selected" class="hidden flex items-center gap-3 bg-slate-800/80 rounded-xl p-3 border border-slate-700">
+        <div id="current-swatch" class="lab-swatch w-14 h-14 rounded-lg shrink-0"></div>
+        <div class="flex-1 min-w-0">
+          <p id="current-label" class="font-bold text-lg truncate"></p>
+          <p id="current-meta" class="text-sm text-slate-400"></p>
+        </div>
+        <button type="button" id="current-clear" class="text-slate-500 hover:text-red-400 p-2 text-2xl leading-none" aria-label="クリア">×</button>
+      </div>
+    </section>
+
+    <!-- Remaining amount -->
+    <section class="space-y-2">
+      <label for="mass-input" class="block text-field font-bold text-amber-300">② 残量（g）</label>
+      <input
+        type="number"
+        id="mass-input"
+        inputmode="decimal"
+        min="1"
+        step="1"
+        value="500"
+        class="w-full text-mega font-black font-mono bg-slate-800 border-2 border-slate-600 focus:border-amber-400 rounded-xl px-4 py-4 text-center outline-none"
+      />
+    </section>
+
+    <!-- Target paint -->
+    <section class="space-y-2">
+      <label class="block text-field font-bold text-amber-300">③ 目標の塗料</label>
+      <div class="relative" id="target-search-wrap">
+        <input
+          type="text"
+          id="target-input"
+          autocomplete="off"
+          placeholder="例: OSR-415 / KP-1-51"
+          class="w-full text-field font-mono bg-slate-800 border-2 border-slate-600 focus:border-amber-400 rounded-xl px-4 py-4 outline-none transition"
+        />
+        <div id="target-suggest" class="hidden absolute z-50 w-full mt-1 bg-slate-800 border-2 border-slate-600 rounded-xl max-h-64 overflow-y-auto shadow-2xl"></div>
+      </div>
+      <div id="target-selected" class="hidden flex items-center gap-3 bg-slate-800/80 rounded-xl p-3 border border-slate-700">
+        <div id="target-swatch" class="lab-swatch w-14 h-14 rounded-lg shrink-0"></div>
+        <div class="flex-1 min-w-0">
+          <p id="target-label" class="font-bold text-lg truncate"></p>
+          <p id="target-meta" class="text-sm text-slate-400"></p>
+        </div>
+        <button type="button" id="target-clear" class="text-slate-500 hover:text-red-400 p-2 text-2xl leading-none" aria-label="クリア">×</button>
+      </div>
+    </section>
+
+    <!-- Incompatibility warning -->
+    <div
+      id="compat-warning"
+      class="hidden rounded-xl border-4 border-red-500 bg-red-950/90 px-4 py-5 text-center"
+      role="alert"
+    >
+      <p class="text-red-400 font-black text-xl leading-snug mb-1">【警告】</p>
+      <p class="text-red-300 font-black text-2xl leading-tight">水性と溶剤は分離するため<br>混合できません</p>
+      <p id="compat-detail" class="text-red-400/80 text-sm mt-3 font-medium"></p>
+    </div>
+
+    <!-- Calculate -->
+    <button
+      type="button"
+      id="calc-btn"
+      disabled
+      class="w-full py-5 rounded-2xl font-black text-2xl transition
+        bg-amber-500 text-slate-900 shadow-lg shadow-amber-500/30
+        disabled:bg-slate-700 disabled:text-slate-500 disabled:shadow-none
+        active:scale-[0.98]"
+    >
+      黒トナー量を逆算する
+    </button>
+
+    <!-- Results -->
+    <section id="result-panel" class="hidden space-y-4">
+      <div class="bg-slate-800 border-2 border-amber-500/50 rounded-2xl p-5 text-center">
+        <p class="text-slate-400 font-bold text-field mb-1">追加する黒顔料（トナー）</p>
+        <p class="text-mega font-black font-mono text-amber-400 tracking-tight">
+          <span id="result-grams">0.00</span><span class="text-3xl ml-1">g</span>
+        </p>
+        <p class="text-sm text-slate-500 mt-2">0.01g 単位 · Kubelka-Munk 理論値</p>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3 text-center">
+        <div class="bg-slate-800 rounded-xl p-3 border border-slate-700">
+          <p class="text-xs text-slate-500 font-bold mb-1">予測 ΔE</p>
+          <p id="result-de" class="text-2xl font-black font-mono text-emerald-400">—</p>
+        </div>
+        <div class="bg-slate-800 rounded-xl p-3 border border-slate-700">
+          <p class="text-xs text-slate-500 font-bold mb-1">乾燥補正</p>
+          <p id="result-dry" class="text-sm font-bold text-sky-400 leading-tight">—</p>
+        </div>
+      </div>
+
+      <div class="bg-slate-800/60 rounded-xl p-4 border border-slate-700 text-sm space-y-2">
+        <p class="font-bold text-slate-400">計算内訳</p>
+        <p id="result-detail" class="text-slate-300 leading-relaxed font-mono text-xs"></p>
+      </div>
+    </section>
+
+    <!-- Disclaimer -->
+    <section class="border-t border-slate-700 pt-6 space-y-4">
+      <p class="text-sm text-slate-500 leading-relaxed text-center">
+        ⚠️ 本計算は<strong class="text-slate-400">理論値</strong>です。現場の基材・希釈率・天候により結果は変わります。<br>
+        必ず試し塗りで微調整してください。
+      </p>
+
+      <!-- Dummy affiliate -->
+      <a
+        href="#"
+        onclick="return false;"
+        class="block bg-gradient-to-r from-slate-800 to-slate-700 border border-slate-600 rounded-xl p-4 hover:border-amber-500/40 transition"
+      >
+        <p class="text-xs text-amber-500/80 font-bold mb-1">現場ツール</p>
+        <p class="font-bold text-lg text-slate-200">0.01g対応 デジタル秤</p>
+        <p class="text-sm text-slate-400 mt-1">職人向け高精度計量 · Amazonで見る →</p>
+        <p class="text-[10px] text-slate-600 mt-2">※広告（ダミー枠）</p>
+      </a>
+    </section>
+  </main>
+
+  <footer class="fixed bottom-0 inset-x-0 bg-slate-950/95 border-t border-slate-800 py-2 text-center text-[10px] text-slate-600">
+    IRO-HACK v1.0 · 日塗 / 関西 / SK · L*a*b* · KM理論
+  </footer>
+
+<script>
+(function () {
+  'use strict';
+
+  // ─── Constants ───────────────────────────────────────────────
+  const TYPE = { WATER: 'water', SOLVENT: 'solvent' };
+  const DRYING_L_FACTOR = 0.95; // 水性乾燥後 L* ≈ 5% 低下
+  const DE_TARGET = 1.5;
+
+  const MANUFACTURERS = {
+    nippon: {
+      id: 'nippon',
+      name: '日本ペイント',
+      series: 'ND色',
+      baseRatio: 1.42,
+      blackTint: 0.86,
+      blackKS: 9.2,
+      whiteKS: 0.048,
+      badge: '日塗',
+      colorClass: 'text-blue-400',
+    },
+    kansai: {
+      id: 'kansai',
+      name: '関西ペイント',
+      series: 'KP色',
+      baseRatio: 1.44,
+      blackTint: 0.89,
+      blackKS: 9.6,
+      whiteKS: 0.045,
+      badge: '関西',
+      colorClass: 'text-green-400',
+    },
+    sk: {
+      id: 'sk',
+      name: 'エスケー化研',
+      series: 'OSR・淡彩色',
+      baseRatio: 1.41,
+      blackTint: 0.83,
+      blackKS: 8.8,
+      whiteKS: 0.052,
+      badge: 'SK',
+      colorClass: 'text-purple-400',
+    },
+  };
+
+  // ─── Color database (L*a*b* representative samples) ─────────
+  function c(mfrId, code, name, L, a, b, type) {
+    return {
+      mfrId,
+      code,
+      name,
+      norm: normalizeCode(code),
+      lab: { L, a, b },
+      type: type || TYPE.WATER,
+    };
+  }
+
+  const COLORS_RAW = [
+    // 日本ペイント ND色 (38)
+    c('nippon','ND-10','ホワイト',96.5,0.2,1.0,TYPE.WATER),
+    c('nippon','ND-20','オフホワイト',94.0,0.5,2.5,TYPE.WATER),
+    c('nippon','ND-30','クリームホワイト',91.5,1.2,5.0,TYPE.WATER),
+    c('nippon','ND-40','アイボリー',89.0,1.5,8.0,TYPE.WATER),
+    c('nippon','ND-50','ベージュ',86.0,2.0,12.0,TYPE.WATER),
+    c('nippon','ND-60','サンド',83.0,3.0,15.0,TYPE.WATER),
+    c('nippon','ND-70','ライトグレー',82.0,-0.5,1.0,TYPE.WATER),
+    c('nippon','ND-80','ミディアムグレー',72.0,-0.8,0.5,TYPE.WATER),
+    c('nippon','ND-90','ダークグレー',55.0,-1.0,0.0,TYPE.SOLVENT),
+    c('nippon','ND-100','ブラック',18.0,0.5,0.0,TYPE.SOLVENT),
+    c('nippon','ND-110','ペールブルー',85.0,-4.0,-8.0,TYPE.WATER),
+    c('nippon','ND-120','スカイブルー',78.0,-8.0,-12.0,TYPE.WATER),
+    c('nippon','ND-130','ブルー',62.0,-12.0,-18.0,TYPE.SOLVENT),
+    c('nippon','ND-140','ネイビー',35.0,-5.0,-12.0,TYPE.SOLVENT),
+    c('nippon','ND-150','ペールグリーン',88.0,-6.0,4.0,TYPE.WATER),
+    c('nippon','ND-155','ミントグリーン',82.0,-12.0,6.0,TYPE.WATER),
+    c('nippon','ND-160','グリーン',65.0,-18.0,10.0,TYPE.WATER),
+    c('nippon','ND-170','オリーブ',58.0,-8.0,22.0,TYPE.SOLVENT),
+    c('nippon','ND-180','ペールイエロー',92.0,-2.0,18.0,TYPE.WATER),
+    c('nippon','ND-185','レモンイエロー',88.0,-4.0,28.0,TYPE.WATER),
+    c('nippon','ND-190','イエロー',82.0,-6.0,35.0,TYPE.WATER),
+    c('nippon','ND-200','オレンジ',72.0,8.0,38.0,TYPE.WATER),
+    c('nippon','ND-210','サーモンピンク',78.0,12.0,8.0,TYPE.WATER),
+    c('nippon','ND-220','コーラル',70.0,18.0,12.0,TYPE.WATER),
+    c('nippon','ND-230','レッド',48.0,32.0,18.0,TYPE.SOLVENT),
+    c('nippon','ND-240','ワインレッド',35.0,22.0,8.0,TYPE.SOLVENT),
+    c('nippon','ND-250','ブラウン',42.0,10.0,18.0,TYPE.SOLVENT),
+    c('nippon','ND-260','チョコレート',32.0,8.0,12.0,TYPE.SOLVENT),
+    c('nippon','ND-270','タン',68.0,8.0,22.0,TYPE.WATER),
+    c('nippon','ND-280','テラコッタ',55.0,16.0,22.0,TYPE.SOLVENT),
+    c('nippon','ND-290','モカ',48.0,6.0,14.0,TYPE.SOLVENT),
+    c('nippon','ND-300','ラベンダー',78.0,8.0,-12.0,TYPE.WATER),
+    c('nippon','ND-310','ライラック',68.0,14.0,-18.0,TYPE.WATER),
+    c('nippon','ND-320','パープル',42.0,22.0,-22.0,TYPE.SOLVENT),
+    c('nippon','ND-330','シルバーグレー',75.0,-0.5,0.5,TYPE.SOLVENT),
+    c('nippon','ND-340','チャコール',38.0,-1.0,1.0,TYPE.SOLVENT),
+    c('nippon','ND-350','アンティークホワイト',90.0,1.0,6.0,TYPE.WATER),
+    c('nippon','ND-360','ウォームグレー',68.0,1.0,4.0,TYPE.WATER),
+    c('nippon','ND-370','クールグレー',70.0,-2.0,2.0,TYPE.WATER),
+
+    // 関西ペイント KP色 (38)
+    c('kansai','KP-1-10','ホワイト',96.8,0.1,0.8,TYPE.WATER),
+    c('kansai','KP-1-20','オフホワイト',94.2,0.4,2.2,TYPE.WATER),
+    c('kansai','KP-1-30','アイボリー',90.5,1.0,7.5,TYPE.WATER),
+    c('kansai','KP-1-40','ベージュ',86.5,2.2,11.5,TYPE.WATER),
+    c('kansai','KP-1-51','サンドベージュ',84.0,2.8,14.0,TYPE.WATER),
+    c('kansai','KP-1-60','ライトグレー',81.5,-0.6,0.8,TYPE.WATER),
+    c('kansai','KP-1-70','グレー',70.0,-1.0,0.2,TYPE.WATER),
+    c('kansai','KP-1-80','ダークグレー',52.0,-1.2,-0.5,TYPE.SOLVENT),
+    c('kansai','KP-1-90','ブラック',17.5,0.3,-0.2,TYPE.SOLVENT),
+    c('kansai','KP-85-10','ペールブルー',86.0,-3.5,-7.5,TYPE.WATER),
+    c('kansai','KP-85-20','ブルー',75.0,-10.0,-14.0,TYPE.WATER),
+    c('kansai','KP-85-30','ディープブルー',58.0,-14.0,-20.0,TYPE.SOLVENT),
+    c('kansai','KP-85-40','ネイビー',34.0,-4.0,-10.0,TYPE.SOLVENT),
+    c('kansai','KP-80-10','ペールグリーン',87.0,-5.5,3.5,TYPE.WATER),
+    c('kansai','KP-80-20','グリーン',78.0,-14.0,8.0,TYPE.WATER),
+    c('kansai','KP-80-30','フォレスト',62.0,-16.0,12.0,TYPE.SOLVENT),
+    c('kansai','KP-80-40','オリーブ',56.0,-6.0,20.0,TYPE.SOLVENT),
+    c('kansai','KP-75-10','ペールイエロー',91.5,-1.5,16.0,TYPE.WATER),
+    c('kansai','KP-75-20','イエロー',84.0,-5.0,32.0,TYPE.WATER),
+    c('kansai','KP-75-30','ゴールド',76.0,2.0,38.0,TYPE.WATER),
+    c('kansai','KP-70-10','オレンジ',71.0,10.0,36.0,TYPE.WATER),
+    c('kansai','KP-70-20','サーモン',77.0,14.0,10.0,TYPE.WATER),
+    c('kansai','KP-70-30','レッド',46.0,34.0,20.0,TYPE.SOLVENT),
+    c('kansai','KP-70-40','マルーン',33.0,24.0,6.0,TYPE.SOLVENT),
+    c('kansai','KP-65-10','ブラウン',40.0,12.0,16.0,TYPE.SOLVENT),
+    c('kansai','KP-65-20','チョコ',30.0,8.0,10.0,TYPE.SOLVENT),
+    c('kansai','KP-65-30','テラコッタ',54.0,18.0,24.0,TYPE.SOLVENT),
+    c('kansai','KP-60-10','ラベンダー',79.0,7.0,-11.0,TYPE.WATER),
+    c('kansai','KP-60-20','パープル',44.0,24.0,-20.0,TYPE.SOLVENT),
+    c('kansai','KP-55-10','シルバー',74.0,-0.8,0.2,TYPE.SOLVENT),
+    c('kansai','KP-55-20','チャコール',36.0,-1.5,0.5,TYPE.SOLVENT),
+    c('kansai','KP-50-10','ウォームホワイト',93.0,0.8,5.0,TYPE.WATER),
+    c('kansai','KP-50-20','クールホワイト',92.5,-0.5,2.0,TYPE.WATER),
+    c('kansai','KP-45-10','ミストブルー',88.0,-2.0,-4.0,TYPE.WATER),
+    c('kansai','KP-45-20','スモークブルー',65.0,-6.0,-8.0,TYPE.WATER),
+    c('kansai','KP-40-10','ミストグリーン',86.0,-4.0,2.0,TYPE.WATER),
+    c('kansai','KP-40-20','セージ',72.0,-8.0,8.0,TYPE.WATER),
+    c('kansai','KP-851','グレージュ',78.0,2.0,6.0,TYPE.WATER),
+
+    // エスケー化研 OSR・淡彩色 (38)
+    c('sk','OSR-10','ホワイト',96.2,0.0,1.2,TYPE.WATER),
+    c('sk','OSR-20','オフホワイト',93.8,0.6,2.8,TYPE.WATER),
+    c('sk','OSR-30','アイボリー',90.0,1.2,7.0,TYPE.WATER),
+    c('sk','OSR-40','ベージュ',85.5,2.5,12.5,TYPE.WATER),
+    c('sk','OSR-50','サンド',82.5,3.2,14.5,TYPE.WATER),
+    c('sk','OSR-60','ライトグレー',80.5,-0.4,1.2,TYPE.WATER),
+    c('sk','OSR-70','グレー',68.0,-1.2,0.0,TYPE.WATER),
+    c('sk','OSR-80','ダークグレー',50.0,-1.5,-0.8,TYPE.SOLVENT),
+    c('sk','OSR-90','ブラック',16.8,0.2,0.0,TYPE.SOLVENT),
+    c('sk','OSR-100','ペールブルー',84.5,-3.8,-7.0,TYPE.WATER),
+    c('sk','OSR-110','ブルー',74.0,-9.5,-13.0,TYPE.WATER),
+    c('sk','OSR-120','ネイビー',33.0,-3.5,-9.0,TYPE.SOLVENT),
+    c('sk','OSR-130','ペールグリーン',86.5,-5.0,3.0,TYPE.WATER),
+    c('sk','OSR-140','グリーン',76.0,-13.0,7.0,TYPE.WATER),
+    c('sk','OSR-150','オリーブ',55.0,-5.0,18.0,TYPE.SOLVENT),
+    c('sk','OSR-160','ペールイエロー',91.0,-1.0,15.0,TYPE.WATER),
+    c('sk','OSR-170','イエロー',83.0,-5.5,30.0,TYPE.WATER),
+    c('sk','OSR-180','オレンジ',70.0,12.0,35.0,TYPE.WATER),
+    c('sk','OSR-190','サーモン',76.5,15.0,9.0,TYPE.WATER),
+    c('sk','OSR-200','レッド',45.0,35.0,22.0,TYPE.SOLVENT),
+    c('sk','OSR-210','ブラウン',38.0,14.0,14.0,TYPE.SOLVENT),
+    c('sk','OSR-220','テラコッタ',52.0,20.0,26.0,TYPE.SOLVENT),
+    c('sk','OSR-223','ウォームグレー',72.0,1.5,5.0,TYPE.WATER),
+    c('sk','OSR-230','ラベンダー',77.0,9.0,-10.0,TYPE.WATER),
+    c('sk','OSR-240','パープル',40.0,26.0,-18.0,TYPE.SOLVENT),
+    c('sk','OSR-250','シルバー',73.0,-1.0,0.0,TYPE.SOLVENT),
+    c('sk','OSR-260','チャコール',35.0,-2.0,0.5,TYPE.SOLVENT),
+    c('sk','OSR-300','淡彩ホワイト',95.0,0.2,3.0,TYPE.WATER),
+    c('sk','OSR-310','淡彩ベージュ',88.0,1.8,9.0,TYPE.WATER),
+    c('sk','OSR-320','淡彩ブルー',82.0,-2.5,-5.0,TYPE.WATER),
+    c('sk','OSR-330','淡彩グリーン',84.0,-4.0,2.0,TYPE.WATER),
+    c('sk','OSR-340','淡彩ピンク',86.0,6.0,2.0,TYPE.WATER),
+    c('sk','OSR-350','淡彩ラベンダー',85.0,4.0,-6.0,TYPE.WATER),
+    c('sk','OSR-400','ミディアムグレー',62.0,-0.8,0.5,TYPE.WATER),
+    c('sk','OSR-410','スモーキーブルー',58.0,-4.0,-6.0,TYPE.WATER),
+    c('sk','OSR-415','スレートグレー',48.0,-1.0,2.0,TYPE.WATER),
+    c('sk','OSR-420','モスグリーン',52.0,-6.0,6.0,TYPE.WATER),
+    c('sk','OSR-430','アンバー',60.0,6.0,28.0,TYPE.SOLVENT),
+    c('sk','OSR-440','ディープレッド',30.0,28.0,12.0,TYPE.SOLVENT),
+  ];
+
+  const COLOR_INDEX = COLORS_RAW.map((col, idx) => ({ ...col, idx }));
+  const NORM_LOOKUP = new Map();
+  COLOR_INDEX.forEach((col) => {
+    if (!NORM_LOOKUP.has(col.norm)) NORM_LOOKUP.set(col.norm, col);
+  });
+
+  // ─── Utilities ───────────────────────────────────────────────
+  function normalizeCode(s) {
+    return String(s || '')
+      .toLowerCase()
+      .replace(/[\s\-_・．.]/g, '')
+      .replace(/[Ａ-Ｚａ-ｚ０-９]/g, (ch) =>
+        String.fromCharCode(ch.charCodeAt(0) - 0xfee0)
+      );
+  }
+
+  function deltaE(lab1, lab2) {
+    return Math.sqrt(
+      (lab1.L - lab2.L) ** 2 +
+      (lab1.a - lab2.a) ** 2 +
+      (lab1.b - lab2.b) ** 2
+    );
+  }
+
+  function labToRgb(L, a, b) {
+    const fy = (L + 16) / 116;
+    const fx = a / 500 + fy;
+    const fz = fy - b / 200;
+    const fInv = (t) => {
+      const t3 = t ** 3;
+      return t3 > 0.008856 ? t3 : (t - 16 / 116) / 7.787;
+    };
+    let X = 95.047 * fInv(fx);
+    let Y = 100.0 * fInv(fy);
+    let Z = 108.883 * fInv(fz);
+    X /= 100; Y /= 100; Z /= 100;
+    let r = X * 3.2406 + Y * -1.5372 + Z * -0.4986;
+    let g = X * -0.9689 + Y * 1.8758 + Z * 0.0415;
+    let bl = X * 0.0557 + Y * -0.204 + Z * 1.057;
+    const gamma = (u) =>
+      u <= 0.0031308 ? 12.92 * u : 1.055 * u ** (1 / 2.4) - 0.055;
+    r = Math.round(Math.min(255, Math.max(0, gamma(r) * 255)));
+    g = Math.round(Math.min(255, Math.max(0, gamma(g) * 255)));
+    bl = Math.round(Math.min(255, Math.max(0, gamma(bl) * 255)));
+    return `rgb(${r},${g},${bl})`;
+  }
+
+  function typeLabel(type) {
+    return type === TYPE.WATER ? '水性' : '弱溶剤';
+  }
+
+  function isIncompatible(t1, t2) {
+    return t1 !== t2;
+  }
+
+  // ─── Kubelka-Munk helpers ─────────────────────────────────────
+  function reflectanceFromL(L) {
+    const Y = ((L + 16) / 116) ** 3 > 0.008856
+      ? ((L + 16) / 116) ** 3
+      : L / 903.3;
+    return Math.min(0.99, Math.max(0.005, Y));
+  }
+
+  function LFromReflectance(R) {
+    const Y = Math.min(0.99, Math.max(0.005, R));
+    const fy = Y > 0.008856 ? Y ** (1 / 3) : 7.787 * Y + 16 / 116;
+    return Math.max(0, Math.min(100, 116 * fy - 16));
+  }
+
+  function ksFromR(R) {
+    if (R <= 0.005) return 500;
+    if (R >= 0.995) return 0.001;
+    return ((1 - R) ** 2) / (2 * R);
+  }
+
+  function RFromKS(ks) {
+    if (ks <= 0) return 0.99;
+    return 1 + ks - Math.sqrt(ks ** 2 + 2 * ks);
+  }
+
+  /** KM mix: weighted K/S of base film + black toner */
+  function predictLabWithBlack(currentLab, blackG, baseG, mfr) {
+    const total = baseG + blackG;
+    if (total <= 0) return { ...currentLab };
+
+    const fBlack = blackG / total;
+    const fBase = baseG / total;
+
+    const R0 = reflectanceFromL(currentLab.L);
+    const KS0 = ksFromR(R0) * (1 / mfr.baseRatio);
+
+    const KSblack = mfr.blackKS * mfr.blackTint;
+    const KSwhite = mfr.whiteKS * mfr.baseRatio;
+
+    const KSbase = KS0 * fBase + KSwhite * fBase * 0.15;
+    const KSmix = KSbase * (1 - fBlack) + KSblack * fBlack;
+
+    const Rmix = RFromKS(KSmix);
+    const newL = LFromReflectance(Rmix);
+
+    const chromaAtten = 1 - fBlack * mfr.blackTint * 0.62;
+    const a = currentLab.a * chromaAtten;
+    const b = currentLab.b * chromaAtten;
+
+    return { L: newL, a, b };
+  }
+
+  /** 水性: 乾燥後 L* 5% 低下 → 調色時は目標を「湿り状態」で高めに設定 */
+  function effectiveTargetLab(targetLab, involvesWater) {
+    if (!involvesWater) return { ...targetLab };
+    return {
+      L: Math.min(100, targetLab.L / DRYING_L_FACTOR),
+      a: targetLab.a,
+      b: targetLab.b,
+    };
+  }
+
+  function dryingNote(current, target) {
+    const w =
+      current.type === TYPE.WATER ||
+      target.type === TYPE.WATER;
+    if (!w) return '補正なし（溶剤系）';
+    return `水性 L*×${DRYING_L_FACTOR} 乾燥補正済`;
+  }
+
+  /** 0.01g 刻み逆算 */
+  function calculateBlackToner(current, target, baseG, mfr) {
+    const involvesWater =
+      current.type === TYPE.WATER || target.type === TYPE.WATER;
+    const effTarget = effectiveTargetLab(target.lab, involvesWater);
+
+    const maxBlack = Math.min(baseG * 0.35, 200);
+    let bestG = 0;
+    let bestDE = deltaE(current.lab, effTarget);
+    let bestLab = { ...current.lab };
+
+    for (let g = 0; g <= maxBlack + 0.001; g += 0.01) {
+      const rounded = Math.round(g * 100) / 100;
+      const lab = predictLabWithBlack(current.lab, rounded, baseG, mfr);
+      const de = deltaE(lab, effTarget);
+      if (de < bestDE) {
+        bestDE = de;
+        bestG = rounded;
+        bestLab = lab;
+      }
+    }
+
+    const dryLab =
+      involvesWater
+        ? {
+            L: bestLab.L * DRYING_L_FACTOR,
+            a: bestLab.a,
+            b: bestLab.b,
+          }
+        : bestLab;
+
+    const dryDE = deltaE(dryLab, target.lab);
+
+    return {
+      blackGrams: bestG,
+      deltaE: bestDE,
+      dryDeltaE: dryDE,
+      predictedWet: bestLab,
+      predictedDry: dryLab,
+      effectiveTarget: effTarget,
+      involvesWater,
+    };
+  }
+
+  // ─── Search ───────────────────────────────────────────────────
+  function searchColors(query, limit = 12) {
+    const q = normalizeCode(query);
+    if (!q) return [];
+
+    const exact = NORM_LOOKUP.get(q);
+    const results = [];
+    const seen = new Set();
+
+    if (exact) {
+      results.push(exact);
+      seen.add(exact.idx);
+    }
+
+    for (const col of COLOR_INDEX) {
+      if (results.length >= limit) break;
+      if (seen.has(col.idx)) continue;
+      const codeMatch = col.norm.includes(q);
+      const nameMatch = col.name.includes(query);
+      if (codeMatch || nameMatch) {
+        results.push(col);
+        seen.add(col.idx);
+      }
+    }
+    return results.slice(0, limit);
+  }
+
+  // ─── DOM refs ─────────────────────────────────────────────────
+  const $ = (id) => document.getElementById(id);
+
+  const state = {
+    current: null,
+    target: null,
+  };
+
+  const currentInput = $('current-input');
+  const targetInput = $('target-input');
+  const currentSuggest = $('current-suggest');
+  const targetSuggest = $('target-suggest');
+  const calcBtn = $('calc-btn');
+  const compatWarning = $('compat-warning');
+  const compatDetail = $('compat-detail');
+  const resultPanel = $('result-panel');
+
+  function renderSuggest(container, items, onPick) {
+    if (!items.length) {
+      container.classList.add('hidden');
+      container.innerHTML = '';
+      return;
+    }
+    container.innerHTML = items
+      .map((col) => {
+        const mfr = MANUFACTURERS[col.mfrId];
+        const bg = labToRgb(col.lab.L, col.lab.a, col.lab.b);
+        return `
+          <button type="button" class="suggest-item w-full flex items-center gap-3 px-4 py-3 border-b border-slate-700 last:border-0 text-left hover:bg-slate-700/50"
+            data-idx="${col.idx}">
+            <span class="lab-swatch w-10 h-10 rounded-lg shrink-0" style="background:${bg}"></span>
+            <span class="flex-1 min-w-0">
+              <span class="font-mono font-bold text-base block">${col.code}</span>
+              <span class="text-sm text-slate-400">${col.name} · ${mfr.badge} · ${typeLabel(col.type)}</span>
+            </span>
+          </button>`;
+      })
+      .join('');
+    container.classList.remove('hidden');
+    container.querySelectorAll('button').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const col = COLOR_INDEX[Number(btn.dataset.idx)];
+        onPick(col);
+        container.classList.add('hidden');
+      });
+    });
+  }
+
+  function showSelected(which, col) {
+    const mfr = MANUFACTURERS[col.mfrId];
+    const bg = labToRgb(col.lab.L, col.lab.a, col.lab.b);
+    const prefix = which === 'current' ? 'current' : 'target';
+
+    $(`${prefix}-selected`).classList.remove('hidden');
+    $(`${prefix}-swatch`).style.background = bg;
+    $(`${prefix}-label`).innerHTML =
+      `<span class="${mfr.colorClass}">${col.code}</span> ${col.name}`;
+    $(`${prefix}-meta`).textContent =
+      `${mfr.name} · L*${col.lab.L.toFixed(1)} a*${col.lab.a.toFixed(1)} b*${col.lab.b.toFixed(1)} · ${typeLabel(col.type)}`;
+    $(`${prefix}-input`).value = col.code;
+  }
+
+  function clearSelected(which) {
+    const prefix = which === 'current' ? 'current' : 'target';
+    state[which] = null;
+    $(`${prefix}-selected`).classList.add('hidden');
+    $(`${prefix}-input`).value = '';
+    updateUI();
+  }
+
+  function wireSearch(inputEl, suggestEl, key) {
+    inputEl.addEventListener('input', () => {
+      const q = inputEl.value.trim();
+      if (!q) {
+        suggestEl.classList.add('hidden');
+        return;
+      }
+      renderSuggest(suggestEl, searchColors(q), (col) => {
+        state[key] = col;
+        showSelected(key, col);
+        updateUI();
+      });
+    });
+
+    inputEl.addEventListener('focus', () => {
+      const q = inputEl.value.trim();
+      if (q) renderSuggest(suggestEl, searchColors(q), (col) => {
+        state[key] = col;
+        showSelected(key, col);
+        updateUI();
+      });
+    });
+  }
+
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('#current-search-wrap')) currentSuggest.classList.add('hidden');
+    if (!e.target.closest('#target-search-wrap')) targetSuggest.classList.add('hidden');
+  });
+
+  wireSearch(currentInput, currentSuggest, 'current');
+  wireSearch(targetInput, targetSuggest, 'target');
+
+  $('current-clear').addEventListener('click', () => clearSelected('current'));
+  $('target-clear').addEventListener('click', () => clearSelected('target'));
+
+  function updateUI() {
+    const { current, target } = state;
+    const incompatible =
+      current && target && isIncompatible(current.type, target.type);
+
+    if (incompatible) {
+      compatWarning.classList.remove('hidden');
+      compatDetail.textContent =
+        `現状: ${typeLabel(current.type)}（${current.code}）↔ 目標: ${typeLabel(target.type)}（${target.code}）`;
+    } else {
+      compatWarning.classList.add('hidden');
+    }
+
+    const mass = parseFloat($('mass-input').value);
+    const massOk = Number.isFinite(mass) && mass > 0;
+
+    const canCalc = current && target && !incompatible && massOk;
+    calcBtn.disabled = !canCalc;
+    if (!canCalc) resultPanel.classList.add('hidden');
+  }
+
+  $('mass-input').addEventListener('input', updateUI);
+
+  calcBtn.addEventListener('click', () => {
+    const { current, target } = state;
+    if (!current || !target) return;
+
+    const baseG = parseFloat($('mass-input').value);
+    if (!Number.isFinite(baseG) || baseG <= 0) return;
+
+    const mfr = MANUFACTURERS[current.mfrId];
+    const result = calculateBlackToner(current, target, baseG, mfr);
+
+    $('result-grams').textContent = result.blackGrams.toFixed(2);
+    $('result-de').textContent = result.dryDeltaE.toFixed(2);
+    $('result-dry').textContent = dryingNote(current, target);
+
+    const pct = ((result.blackGrams / (baseG + result.blackGrams)) * 100).toFixed(2);
+    $('result-detail').innerHTML = [
+      `現状 L*a*b*: ${current.lab.L.toFixed(1)}, ${current.lab.a.toFixed(1)}, ${current.lab.b.toFixed(1)}`,
+      `目標 L*a*b*: ${target.lab.L.toFixed(1)}, ${target.lab.a.toFixed(1)}, ${target.lab.b.toFixed(1)}`,
+      result.involvesWater
+        ? `湿り換算目標 L*: ${result.effectiveTarget.L.toFixed(1)}（乾燥後 ≈ ${target.lab.L.toFixed(1)}）`
+        : '',
+      `白ベース比重: ${mfr.baseRatio} · 黒着色力: ${mfr.blackTint}`,
+      `予測（湿）L*a*b*: ${result.predictedWet.L.toFixed(1)}, ${result.predictedWet.a.toFixed(1)}, ${result.predictedWet.b.toFixed(1)}`,
+      result.involvesWater
+        ? `予測（乾）L*a*b*: ${result.predictedDry.L.toFixed(1)}, ${result.predictedDry.a.toFixed(1)}, ${result.predictedDry.b.toFixed(1)}`
+        : '',
+      `黒トナー比率: ${pct}% / 総量 ${(baseG + result.blackGrams).toFixed(2)}g`,
+    ]
+      .filter(Boolean)
+      .join('<br>');
+
+    resultPanel.classList.remove('hidden');
+    resultPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  });
+
+  updateUI();
+})();
+</script>
+</body>
+</html>
