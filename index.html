@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>IRO-HACK | 職人向け逆引き調色計算</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -75,7 +75,83 @@
       min-height: 3.25rem;
     }
     .product-suggest-item:active { background: #334155; }
-    .legal-scroll { max-height: 11rem; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+    .legal-scroll { max-height: 8rem; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+    .policy-fold > summary { list-style: none; cursor: pointer; }
+    .policy-fold > summary::-webkit-details-marker { display: none; }
+    .policy-fold > summary::after { content: ' ▾'; opacity: 0.5; font-size: 0.65rem; }
+    .policy-fold[open] > summary::after { content: ' ▴'; }
+    .rule-compact label { min-height: 2.25rem; }
+    .rule-compact input[type="checkbox"] { width: 1.25rem; height: 1.25rem; }
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+    .manual-pick-fold > summary { list-style: none; cursor: pointer; font-size: 0.7rem; color: #64748b; }
+    .manual-pick-fold > summary::-webkit-details-marker { display: none; }
+    .manual-pick-fold > summary::after { content: ' ▾'; opacity: 0.6; }
+    .manual-pick-fold[open] > summary::after { content: ' ▴'; }
+    .color-chip {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.65rem 0.85rem;
+      border-radius: 0.75rem;
+      border: 2px solid #0ea5e9;
+      background: rgba(14, 165, 233, 0.08);
+    }
+    .suggest-empty { padding: 0.85rem 1rem; font-size: 0.8rem; color: #94a3b8; text-align: center; }
+    #calc-sticky {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: calc(1.75rem + env(safe-area-inset-bottom, 0px));
+      z-index: 45;
+      padding: 0 1rem;
+      pointer-events: none;
+    }
+    #calc-sticky-inner {
+      max-width: 32rem;
+      margin: 0 auto;
+      pointer-events: auto;
+      background: rgba(15, 23, 42, 0.96);
+      border: 2px solid #475569;
+      border-radius: 1rem;
+      padding: 0.65rem 0.75rem 0.75rem;
+      box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(8px);
+    }
+    .mfr-chip {
+      flex: 1;
+      min-width: 0;
+      max-width: 7.5rem;
+      padding: 0.35rem 0.5rem;
+      border-radius: 0.5rem;
+      border: 1px solid #475569;
+      background: #1e293b;
+      text-align: center;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .mfr-chip:active { transform: scale(0.97); }
+    .mfr-chip-active {
+      border-color: #fbbf24;
+      background: rgba(251, 191, 36, 0.12);
+      box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.35);
+    }
+    .mfr-chip-abbr { display: block; font-size: 0.7rem; font-weight: 800; line-height: 1.2; }
+    .mfr-chip-name { display: block; font-size: 0.55rem; color: #94a3b8; line-height: 1.2; margin-top: 0.1rem; }
+    .mfr-chip[data-mfr="nippon"] .mfr-chip-abbr { color: #93c5fd; }
+    .mfr-chip[data-mfr="kansai"] .mfr-chip-abbr { color: #86efac; }
+    .mfr-chip[data-mfr="sk"] .mfr-chip-abbr { color: #c4b5fd; }
+    .flow-step { padding: 0.15rem 0.45rem; border-radius: 0.35rem; color: #64748b; }
+    .flow-step.done { color: #34d399; background: rgba(52, 211, 153, 0.1); }
+    .flow-step.active { color: #fbbf24; background: rgba(251, 191, 36, 0.12); }
     @media (max-width: 640px) {
       .text-mega { font-size: 2.5rem; }
     }
@@ -83,17 +159,44 @@
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen font-sans antialiased">
 
-  <header class="border-b border-slate-700 bg-slate-950/90 sticky top-0 z-40 px-4 py-3">
+  <header class="border-b border-slate-700 bg-slate-950/95 sticky top-0 z-40 px-4 py-2.5 backdrop-blur-sm">
     <div class="flex items-center gap-3 max-w-lg mx-auto">
-      <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center text-slate-900 font-black shrink-0">IH</div>
-      <div>
-        <h1 class="text-xl font-black text-amber-400">IRO-HACK</h1>
-        <p class="text-xs text-slate-400">参考配合 · 試し塗り必須 · 非保証</p>
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center text-slate-900 font-black shrink-0 text-sm">IH</div>
+      <div class="flex-1 min-w-0">
+        <h1 class="text-lg font-black text-amber-400 leading-tight">IRO-HACK</h1>
+        <p class="text-[10px] text-slate-500 leading-tight">参考配合 · 試し塗り必須</p>
       </div>
+    </div>
+    <div class="max-w-lg mx-auto mt-2 pt-2 border-t border-slate-800" aria-label="対応メーカー">
+      <p class="text-[9px] text-slate-500 text-center mb-1.5 tracking-wide">対応メーカー · 色番体系</p>
+      <div class="flex gap-1.5 justify-center" role="group">
+        <button type="button" class="mfr-chip" data-mfr="nippon" title="日本ペイント（ND色・日塗工）を①現状にセット">
+          <span class="mfr-chip-abbr">日塗</span>
+          <span class="mfr-chip-name">日本ペイント</span>
+        </button>
+        <button type="button" class="mfr-chip" data-mfr="kansai" title="関西ペイント（KP・コスモ）を①現状にセット">
+          <span class="mfr-chip-abbr">関西</span>
+          <span class="mfr-chip-name">関西ペイント</span>
+        </button>
+        <button type="button" class="mfr-chip" data-mfr="sk" title="SK化研（OSR色）を①現状にセット">
+          <span class="mfr-chip-abbr">SK</span>
+          <span class="mfr-chip-name">エスケー化研</span>
+        </button>
+      </div>
+      <p class="text-[9px] text-slate-600 text-center mt-1 leading-snug">ND / KP / OSR · 水性·弱溶剤1·2液</p>
     </div>
   </header>
 
-  <main class="max-w-lg mx-auto px-4 py-5 space-y-5 pb-28">
+  <main class="max-w-lg mx-auto px-4 py-4 space-y-5 pb-44">
+    <div id="flow-progress" class="flex flex-wrap items-center justify-center gap-x-1 gap-y-0.5 text-[10px] font-bold" aria-label="入力の進捗">
+      <span id="flow-step-1" class="flow-step active">①現状</span>
+      <span class="text-slate-600">→</span>
+      <span id="flow-step-2" class="flow-step">②残量</span>
+      <span class="text-slate-600">→</span>
+      <span id="flow-step-3" class="flow-step">③目標</span>
+      <span class="text-slate-600">→</span>
+      <span id="flow-step-4" class="flow-step">算出</span>
+    </div>
 
     <!-- 現状 -->
     <section class="bg-slate-800/40 border border-slate-700 rounded-2xl p-4 space-y-3">
@@ -117,7 +220,13 @@
 
     <!-- 目標 -->
     <section class="bg-slate-800/40 border border-slate-700 rounded-2xl p-4 space-y-3">
-      <h2 class="text-lg font-black text-amber-300">③ 目標の塗料</h2>
+      <div class="flex items-center justify-between gap-2 flex-wrap">
+        <h2 class="text-lg font-black text-amber-300">③ 目標の塗料</h2>
+        <button type="button" id="copy-product-btn"
+          class="text-xs font-bold px-3 py-2 rounded-lg bg-sky-600/30 border border-sky-500/50 text-sky-200 active:scale-[0.98] disabled:opacity-40 disabled:pointer-events-none">
+          現状と同じ製品
+        </button>
+      </div>
       <div id="target-picker" class="space-y-3"></div>
       <div id="target-preview" class="hidden flex items-center gap-3 bg-slate-900/60 rounded-xl p-3 border border-slate-600">
         <div id="target-swatch" class="lab-swatch w-12 h-12 rounded-lg shrink-0"></div>
@@ -134,72 +243,105 @@
       <p id="compat-detail" class="text-red-400/80 text-sm mt-2"></p>
     </div>
 
-    <section id="legal-notice" class="rounded-xl border-2 border-amber-600/70 bg-amber-950/40 p-4 space-y-3" aria-labelledby="legal-title">
-      <p id="legal-title" class="text-amber-400 font-black text-sm">【重要】免責事項・利用条件（必読）</p>
-      <div class="legal-scroll text-xs text-slate-300 space-y-2 leading-relaxed pr-1">
-        <p>本アプリ「IRO-HACK」は、建築塗料の調色を<strong class="text-slate-100">補助する参考ツール</strong>です。算出される配合量・色差（ΔE）・L*a*b*値は、理論モデルおよび参照データに基づく<strong class="text-slate-100">推定値</strong>であり、実際の塗装結果を保証するものではありません。</p>
-        <ul class="list-disc pl-4 space-y-1">
-          <li>開発者・提供者は、本アプリの利用により生じた<strong class="text-slate-100">色むら・色差・塗膜欠陥・施主クレーム・返工・事故・損害</strong>等について、法令上認められる範囲を超えて<strong class="text-slate-100">一切の責任を負いません</strong>。</li>
-          <li>色データは各社標準色・日塗工色系の<strong class="text-slate-100">参照値</strong>です。製品ロット・下地・希釈・天候・塗布量により結果は変わります。</li>
-          <li>水性と弱溶剤の混合禁止等の警告は参考です。必ず各社の製品説明書・SDSに従ってください。</li>
-          <li><strong class="text-slate-100">必ず小面積の試し塗り</strong>を行い、現場責任者の判断で微調整・採用可否を決定してください。</li>
-          <li>本結果を唯一の根拠として大口契約・保証付き工事に用いないでください。</li>
-        </ul>
+    <section id="policy-compact" class="rounded-lg border border-slate-600/80 bg-slate-800/40 px-3 py-2 space-y-2">
+      <details class="policy-fold text-[10px] text-slate-400">
+        <summary class="font-bold text-slate-500 select-none">免責・利用条件の全文</summary>
+        <div class="legal-scroll text-slate-400 space-y-1.5 leading-relaxed pr-1 mt-2">
+          <p>本アプリは調色<strong class="text-slate-300">補助の参考ツール</strong>です。配合・ΔE・L*a*b*は推定値であり結果を保証しません。</p>
+          <ul class="list-disc pl-3 space-y-0.5">
+            <li>色むら・返工・損害等について提供者は法令上の範囲を超え責任を負いません。</li>
+            <li>色データは参照値。ロット・下地・希釈・天候で変わります。</li>
+            <li>混合警告は参考。各社説明書・SDSに従ってください。</li>
+          </ul>
+        </div>
+      </details>
+      <p id="policy-status" class="text-[10px] text-center text-amber-500/80 font-medium">運用確認 0 / 5</p>
+      <div class="rule-compact grid grid-cols-1 gap-1 text-[11px]">
+        <label class="flex items-center gap-2 cursor-pointer select-none py-0.5">
+          <input type="checkbox" id="rule-disclaimer" class="w-4 h-4 shrink-0 accent-amber-500" />
+          <span class="text-slate-300"><strong class="text-amber-400/90">①</strong> 免責に同意（参考値として使用）</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer select-none py-0.5">
+          <input type="checkbox" id="rule-de-policy" class="w-4 h-4 shrink-0 accent-amber-500" />
+          <span class="text-slate-300"><strong class="text-amber-400/90">②</strong> ΔE&gt;3は目安のみ・本番そのまま不可</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer select-none py-0.5">
+          <input type="checkbox" id="rule-testcoat" class="w-4 h-4 shrink-0 accent-amber-500" />
+          <span class="text-slate-300"><strong class="text-amber-400/90">③</strong> 同条件試し塗り（水性は乾燥24h後）</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer select-none py-0.5">
+          <input type="checkbox" id="rule-color-range" class="w-4 h-4 shrink-0 accent-amber-500" />
+          <span class="text-slate-300"><strong class="text-amber-400/90">④</strong> 初回は淡色〜中間色（L*35〜88）優先</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer select-none py-0.5">
+          <input type="checkbox" id="rule-catalog" class="w-4 h-4 shrink-0 accent-amber-500" />
+          <span class="text-slate-300"><strong class="text-amber-400/90">⑤</strong> 公式カタログ・調色メモと突合</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer select-none py-1 mt-1 border-t border-slate-600/50 pt-2">
+          <input type="checkbox" id="policy-remember-day" class="shrink-0 accent-emerald-500" />
+          <span class="text-slate-400 text-[10px]">②〜⑤を今日は省略（①免責は毎回必須）</span>
+        </label>
       </div>
-      <label class="flex items-start gap-3 cursor-pointer select-none">
-        <input type="checkbox" id="disclaimer-agree" class="mt-0.5 w-6 h-6 shrink-0 accent-amber-500" />
-        <span class="text-sm font-bold text-slate-100 leading-snug">上記免責事項に同意し、参考値としてのみ現場で使用します（試し塗り必須）</span>
-      </label>
     </section>
 
-    <button type="button" id="calc-btn" disabled
-      class="w-full py-5 rounded-2xl font-black text-xl bg-amber-500 text-slate-900 disabled:bg-slate-700 disabled:text-slate-500 active:scale-[0.98]">
-      参考配合比を算出（試し塗り必須）
-    </button>
+    <div id="extreme-color-alert" class="hidden rounded-lg border border-orange-600/60 bg-orange-950/50 px-3 py-2 space-y-1.5" role="alert">
+      <p class="text-orange-300 font-bold text-xs">④ 極濃・極浅 — 職人判断優先</p>
+      <p id="extreme-color-detail" class="text-[10px] text-orange-200/80 leading-snug"></p>
+      <label class="flex items-center gap-2 cursor-pointer select-none">
+        <input type="checkbox" id="rule-extreme-ack" class="w-4 h-4 shrink-0 accent-orange-500" />
+        <span class="text-[11px] font-bold text-orange-100">参考にとどめることを確認</span>
+      </label>
+    </div>
 
-    <section id="result-panel" class="hidden space-y-4">
-      <div id="result-confidence" class="hidden rounded-xl border-2 px-4 py-3 text-center text-sm font-bold"></div>
-      <div id="result-field-tips" class="hidden bg-slate-800/80 border border-slate-600 rounded-xl p-3 text-xs text-slate-300 leading-relaxed"></div>
-      <p id="result-legal-reminder" class="hidden text-[11px] text-amber-500/90 text-center leading-relaxed font-medium"></p>
-      <div id="white-base-notice" class="hidden rounded-xl border-2 border-sky-500 bg-sky-950/80 px-4 py-4 text-center">
-        <p class="text-sky-300 font-black text-base leading-snug">
-          【補正】白ベース塗料を <span id="white-base-grams" class="font-mono text-xl text-sky-200">0.00</span>g 追加した上で、以下のトナーを足してください
-        </p>
+    <section id="result-panel" class="hidden space-y-3">
+      <div id="white-base-notice" class="hidden rounded-xl border-2 border-sky-500 bg-sky-950/80 px-3 py-3 text-center">
+        <p class="text-sky-300 font-bold text-sm">白ベース <span id="white-base-grams" class="font-mono text-lg text-sky-200">0.00</span>g 追加後にトナー投入</p>
       </div>
-      <div class="bg-slate-800 border-2 border-amber-500/50 rounded-2xl p-4">
+      <div id="de-guidance-only-banner" class="hidden rounded-lg border-2 border-red-500 bg-red-950/90 px-3 py-2 text-center text-red-300 text-xs font-bold">
+        ΔE&gt;3 — 目安のみ（試し塗りで再調整）
+      </div>
+      <div id="toner-results-wrap" class="bg-slate-800 border-2 border-amber-500/50 rounded-2xl p-4 relative">
         <p class="text-slate-400 font-bold text-center mb-1 text-sm">参考配合トナー（0.01g単位）</p>
-        <p class="text-[10px] text-slate-500 text-center mb-3">理論値 · 試し塗りで必ず確認</p>
+        <p id="toner-results-caption" class="text-[10px] text-slate-500 text-center mb-3">理論値 · 試し塗りで必ず確認</p>
+        <div id="toner-guidance-overlay" class="hidden absolute inset-0 rounded-2xl bg-red-950/75 flex items-center justify-center pointer-events-none z-10">
+          <p class="text-red-200 font-black text-center text-base px-4">目安のみ<br><span class="text-xs font-bold">本番そのまま不可</span></p>
+        </div>
         <div id="toner-results" class="space-y-2"></div>
       </div>
-      <div class="grid grid-cols-2 gap-3 text-center text-sm">
-        <div class="bg-slate-800 rounded-xl p-3 border border-slate-700">
-          <p class="text-slate-500 text-xs font-bold">予測 ΔE（乾燥）</p>
+      <div class="grid grid-cols-2 gap-2 text-center text-sm">
+        <div class="bg-slate-800 rounded-xl p-2.5 border border-slate-700">
+          <p class="text-slate-500 text-[10px] font-bold">予測 ΔE</p>
           <p id="result-de" class="text-2xl font-black text-emerald-400 font-mono">—</p>
         </div>
-        <div class="bg-slate-800 rounded-xl p-3 border border-slate-700">
-          <p class="text-slate-500 text-xs font-bold">色差 ΔL* Δa* Δb*</p>
-          <p id="result-delta" class="font-bold text-sky-400 text-xs font-mono leading-relaxed">—</p>
+        <div class="bg-slate-800 rounded-xl p-2.5 border border-slate-700">
+          <p class="text-slate-500 text-[10px] font-bold">色差</p>
+          <p id="result-delta" class="font-bold text-sky-400 text-[10px] font-mono leading-snug">—</p>
         </div>
       </div>
-      <div class="bg-slate-800/60 rounded-xl p-3 border border-slate-700">
-        <p class="text-xs font-bold text-slate-500 mb-1">計算内訳</p>
-        <p id="result-detail" class="text-xs text-slate-300 font-mono leading-relaxed"></p>
-      </div>
+      <div id="result-confidence" class="hidden text-center text-xs font-bold rounded-lg px-3 py-2 border"></div>
+      <details class="policy-fold text-xs">
+        <summary class="text-slate-500 font-bold select-none py-1">現場手順・注意（タップで展開）</summary>
+        <div id="result-field-tips" class="hidden bg-slate-800/80 border border-slate-600 rounded-xl p-3 text-xs text-slate-300 leading-relaxed mt-2"></div>
+        <p id="result-legal-reminder" class="hidden text-[10px] text-amber-500/80 mt-2 leading-relaxed"></p>
+        <p id="result-catalog-reminder" class="hidden text-[10px] text-indigo-300/90 mt-1">⑤ 公式カタログ・調色メモと突合</p>
+        <p id="result-detail" class="text-[10px] text-slate-400 font-mono leading-relaxed mt-2"></p>
+      </details>
     </section>
 
-    <section class="border-t border-slate-700 pt-4 space-y-3">
-      <p class="text-xs text-slate-500 text-center leading-relaxed">
-        本アプリの利用は自己責任とします。提供者は塗装結果・損害について一切の責任を負いません。公式カタログ・測色計・職人の経験を優先してください。
-      </p>
-      <a href="#" onclick="return false;" class="block bg-slate-800 border border-slate-600 rounded-xl p-3">
-        <p class="text-xs text-amber-500 font-bold">現場ツール</p>
-        <p class="font-bold">0.01g デジタル秤 · Amazonで見る →</p>
-        <p class="text-[10px] text-slate-600 mt-1">※ダミー広告枠</p>
-      </a>
-    </section>
+    <p class="text-[10px] text-slate-600 text-center pb-2">参考値·非保証·試し塗り必須</p>
   </main>
 
-  <footer class="fixed bottom-0 inset-x-0 bg-slate-950 border-t border-slate-800 py-1.5 text-center text-[10px] text-slate-600">
+  <div id="calc-sticky" aria-live="polite">
+    <div id="calc-sticky-inner">
+      <p id="calc-blocker-hint" class="hidden text-center text-xs text-amber-400 font-bold mb-1.5 leading-snug"></p>
+      <button type="button" id="calc-btn" disabled
+        class="w-full py-4 rounded-xl font-black text-lg bg-amber-500 text-slate-900 disabled:bg-slate-700 disabled:text-slate-500 active:scale-[0.98]">
+        参考配合比を算出
+      </button>
+    </div>
+  </div>
+
+  <footer class="fixed bottom-0 inset-x-0 bg-slate-950 border-t border-slate-800 py-1.5 text-center text-[10px] text-slate-600 z-30">
     <span id="db-stats">IRO-HACK v2</span>
   </footer>
 
@@ -613,6 +755,74 @@
       return scored.slice(0, limit).map((s) => s.entry);
     }
 
+    const colorCatalog = [];
+    Object.keys(products).forEach((mfrId) => {
+      const mfr = manufacturers[mfrId];
+      Object.keys(products[mfrId]).forEach((typeId) => {
+        const type = types.find((t) => t.id === typeId);
+        products[mfrId][typeId].forEach((prod) => {
+          getColorsForProduct(prod).forEach((col) => {
+            colorCatalog.push({
+              mfrId,
+              typeId,
+              product: prod,
+              color: col,
+              searchText: [
+                col.code,
+                col.name,
+                String(col.n),
+                col.systemLabel,
+                mfr.name,
+                type.label,
+                prod.name,
+              ].join(' '),
+            });
+          });
+        });
+      });
+    });
+
+    function searchColors(query, scope, limit = 16) {
+      const q = norm(query);
+      if (!q) return [];
+      const qNum = /^\d+$/.test(q) ? parseInt(q, 10) : null;
+      const pool = colorCatalog.filter((entry) => {
+        if (!scope) return true;
+        if (scope.productId && entry.product.id !== scope.productId) return false;
+        if (scope.typeId && entry.typeId !== scope.typeId) return false;
+        if (scope.mfrId && entry.mfrId !== scope.mfrId) return false;
+        return true;
+      });
+      const scored = [];
+      pool.forEach((entry) => {
+        const codeNorm = norm(entry.color.code);
+        const hay = norm(entry.searchText);
+        let score = 0;
+        if (codeNorm === q) score = 100;
+        else if (qNum !== null && entry.color.n === qNum) score = 95;
+        else if (codeNorm.endsWith(q) || codeNorm.includes(q)) score = 85;
+        else if (qNum !== null && String(entry.color.n).includes(q)) score = 70;
+        else if (hay.includes(q)) score = 55;
+        if (score > 0) scored.push({ entry, score });
+      });
+      scored.sort(
+        (a, b) => b.score - a.score
+          || a.entry.color.code.localeCompare(b.entry.color.code, undefined, { numeric: true }),
+      );
+      const seen = new Set();
+      const out = [];
+      for (const { entry } of scored) {
+        const key = scope?.productId
+          ? `${entry.color.id}:${entry.product.id}`
+          : `${entry.color.code}:${entry.mfrId}:${entry.typeId}:${entry.product.id}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        out.push(entry);
+        if (out.length >= limit) break;
+      }
+      return out;
+    }
+
     function resolveSelection(mfrId, typeId, productId, colorId) {
       const mfr = manufacturers[mfrId];
       const type = types.find((t) => t.id === typeId);
@@ -642,9 +852,11 @@
       colorByKey,
       totalColors,
       productCatalog,
+      colorCatalog,
       getProducts,
       getColorsForProduct,
       searchProducts,
+      searchColors,
       resolveSelection,
     };
   })();
@@ -915,10 +1127,13 @@
         boxClass = 'border-amber-600/60 bg-amber-950/50 text-amber-300';
       } else {
         level = 'poor';
-        label = '参考値の信頼度低 — 段階投入・少しずつ足しながら調整してください';
+        label = '【運用則②】目安のみ（ΔE>3）— 表示gは出発点。段階投入で調整';
         boxClass = 'border-red-600/60 bg-red-950/50 text-red-300';
       }
-      return { level, label, boxClass, notes };
+      if (dryDE > 3.0) {
+        notes.unshift('運用則②：予測ΔEが3を超えています。配合は目安のみとし、本番そのまま投入しないでください。');
+      }
+      return { level, label, boxClass, notes, guidanceOnly: dryDE > 3.0 };
     }
 
     function calculate(current, target, baseG) {
@@ -1009,10 +1224,210 @@
   }
 
   // ═══════════════════════════════════════════════════════════════
+  // 現場運用5則 — FieldPolicy
+  // ═══════════════════════════════════════════════════════════════
+  const FieldPolicy = {
+    DE_GUIDANCE_ONLY: 3.0,
+    L_EXTREME_LOW: 28,
+    L_EXTREME_HIGH: 93,
+    L_RECOMMENDED_MIN: 35,
+    L_RECOMMENDED_MAX: 88,
+
+    analyzeSelection(current, target) {
+      const labs = [];
+      if (current?.lab) labs.push({ role: '現状', code: current.code, lab: current.lab });
+      if (target?.lab) labs.push({ role: '目標', code: target.code, lab: target.lab });
+      const extreme = labs.filter(
+        (x) => x.lab.L < this.L_EXTREME_LOW || x.lab.L > this.L_EXTREME_HIGH,
+      );
+      const outOfRecommended = labs.filter(
+        (x) => x.lab.L < this.L_RECOMMENDED_MIN || x.lab.L > this.L_RECOMMENDED_MAX,
+      );
+      const waterInvolved =
+        current?.category === CATEGORY.WATER || target?.category === CATEGORY.WATER;
+      return {
+        hasExtreme: extreme.length > 0,
+        extreme,
+        outOfRecommended,
+        waterInvolved,
+        recommendedOnly:
+          labs.length === 2
+          && labs.every(
+            (x) => x.lab.L >= this.L_RECOMMENDED_MIN && x.lab.L <= this.L_RECOMMENDED_MAX,
+          ),
+      };
+    },
+
+    allRulesChecked() {
+      return (
+        $('rule-disclaimer').checked
+        && $('rule-de-policy').checked
+        && $('rule-testcoat').checked
+        && $('rule-color-range').checked
+        && $('rule-catalog').checked
+      );
+    },
+
+    extremeAckedIfNeeded(ctx) {
+      if (!ctx.hasExtreme) return true;
+      return $('rule-extreme-ack').checked;
+    },
+
+    applyResultPolicy(result, ctx) {
+      const guidanceOnly = result.dryDeltaE > this.DE_GUIDANCE_ONLY;
+      return {
+        guidanceOnly,
+        showCatalogReminder: true,
+        testcoatNote: ctx.waterInvolved
+          ? '【運用則③】水性：試し塗り後、乾燥24h以上経過してから本番可否を判断'
+          : '【運用則③】本番前に同条件・同希釈の試し塗り板で確認',
+      };
+    },
+
+    calcBlockerMessage(current, target) {
+      if (!current || !target) return '現状・目標の色番まで選択してください';
+      if (isIncompatible(current, target)) return '水性と溶剤は混合できません';
+      if (!this.allRulesChecked()) return '運用則①〜⑤のチェックをすべて入れてください';
+      const ctx = this.analyzeSelection(current, target);
+      if (ctx.hasExtreme && !$('rule-extreme-ack').checked) {
+        return '極濃・極浅色：職人判断の確認にチェックを入れてください';
+      }
+      return '';
+    },
+  };
+
+  // ═══════════════════════════════════════════════════════════════
   // 階層セレクト UI
   // ═══════════════════════════════════════════════════════════════
   const $ = (id) => document.getElementById(id);
   const state = { current: null, target: null };
+  const POLICY_STORAGE_KEY = 'irohack-policy-date';
+  const RULE_IDS_2_5 = ['rule-de-policy', 'rule-testcoat', 'rule-color-range', 'rule-catalog'];
+
+  function todayISO() {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  function debounce(fn, wait) {
+    let timer;
+    return (...args) => {
+      clearTimeout(timer);
+      timer = setTimeout(() => fn(...args), wait);
+    };
+  }
+
+  function updateColorChip(prefix, col) {
+    const p = pickers[prefix];
+    if (!col) {
+      p.colorChip.classList.add('hidden');
+      return;
+    }
+    p.colorChip.classList.remove('hidden');
+    p.colorChipSwatch.style.background = labToRgb(col.lab.L, col.lab.a, col.lab.b);
+    p.colorChipCode.textContent = col.code;
+    p.colorChipName.textContent = col.name;
+  }
+
+  function applyPolicyRememberFromStorage() {
+    if (localStorage.getItem(POLICY_STORAGE_KEY) !== todayISO()) return;
+    RULE_IDS_2_5.forEach((id) => { $(id).checked = true; });
+    $('policy-remember-day').checked = true;
+  }
+
+  function syncPolicyRememberStorage() {
+    if ($('policy-remember-day').checked) {
+      RULE_IDS_2_5.forEach((id) => { $(id).checked = true; });
+      localStorage.setItem(POLICY_STORAGE_KEY, todayISO());
+    } else {
+      localStorage.removeItem(POLICY_STORAGE_KEY);
+    }
+  }
+
+  function applyMfrToPicker(prefix, mfrId) {
+    const p = pickers[prefix];
+    const stateKey = prefix === 'current' ? 'current' : 'target';
+    p.mfr.value = mfrId;
+    resetDown(p, 'type');
+    fillOptions(p.type, ColorDatabase.types, 'id', (t) => t.label);
+    p.type.disabled = false;
+    p.search.value = '';
+    p.colorSearch.value = '';
+    updateColorChip(prefix, null);
+    updateSelection(prefix, stateKey);
+    const section = $(`${prefix}-picker`)?.closest('section')
+      || document.getElementById(`${prefix}-picker`)?.closest('section');
+    document.getElementById(`${prefix}-picker`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    setTimeout(() => p.search.focus(), 200);
+  }
+
+  function updateMfrChipHighlight() {
+    document.querySelectorAll('.mfr-chip').forEach((btn) => {
+      btn.classList.toggle('mfr-chip-active', pickers.current.mfr.value === btn.dataset.mfr);
+    });
+  }
+
+  function updateFlowProgress() {
+    const mass = parseFloat($('mass-input').value);
+    const massOk = Number.isFinite(mass) && mass > 0;
+    const hasCurrent = !!state.current;
+    const hasTarget = !!state.target;
+    const resultOpen = !$('result-panel').classList.contains('hidden');
+    const readyCalc = hasCurrent && hasTarget && massOk;
+
+    const steps = [
+      { el: $('flow-step-1'), done: hasCurrent },
+      { el: $('flow-step-2'), done: massOk },
+      { el: $('flow-step-3'), done: hasTarget },
+      { el: $('flow-step-4'), done: resultOpen, active: readyCalc && !resultOpen },
+    ];
+    let activeSet = false;
+    steps.forEach(({ el, done, active: forceActive }) => {
+      if (!el) return;
+      el.classList.remove('done', 'active');
+      if (done) {
+        el.classList.add('done');
+      } else if (forceActive || !activeSet) {
+        el.classList.add('active');
+        activeSet = true;
+      }
+    });
+  }
+
+  function getCalcBlockerDetail(current, target) {
+    const mass = parseFloat($('mass-input').value);
+    const massOk = Number.isFinite(mass) && mass > 0;
+    if (!current) {
+      const p = pickers.current;
+      if (!p.mfr.value) return '①現状：上の日塗・関西・SKからメーカーを選ぶ';
+      if (!p.product.value) return '①現状：製品を検索して選択';
+      if (!p.color.value) return '①現状：色番を検索（ND / KP / OSR）';
+    }
+    if (!massOk) return '②残量（g）を入力';
+    if (!target) {
+      const p = pickers.target;
+      if (!p.product.value) return '③目標：製品を選ぶか「現状と同じ製品」';
+      if (!p.color.value) return '③目標：色番を検索して選択';
+    }
+    if (isIncompatible(current, target)) return '水性と溶剤は混合できません';
+    if (!$('rule-disclaimer').checked) return '①免責への同意が必要です';
+    if (!FieldPolicy.allRulesChecked()) {
+      if (localStorage.getItem(POLICY_STORAGE_KEY) === todayISO() && !$('policy-remember-day').checked) {
+        return '②〜⑤の確認、または「今日は省略」にチェック';
+      }
+      return '運用確認のチェックを完了してください';
+    }
+    const ctx = FieldPolicy.analyzeSelection(current, target);
+    if (ctx.hasExtreme && !$('rule-extreme-ack').checked) {
+      return '極色：職人判断の確認にチェック';
+    }
+    return '';
+  }
+
+  function initMfrQuickPick() {
+    document.querySelectorAll('.mfr-chip').forEach((btn) => {
+      btn.addEventListener('click', () => applyMfrToPicker('current', btn.dataset.mfr));
+    });
+  }
 
   function selectRow(label, id, disabled) {
     return `
@@ -1028,13 +1443,13 @@
     const el = $(containerId);
     el.innerHTML = `
       <label class="block relative" id="${prefix}-search-wrap">
-        <span class="text-xs font-bold text-amber-400/90 mb-1 block">🔍 製品名・製品番号を入力検索</span>
+        <span class="text-xs font-bold text-amber-400/90 mb-1 block">製品を検索</span>
         <input
           type="search"
           id="${prefix}-product-search"
           autocomplete="off"
           enterkeyhint="search"
-          placeholder="例: パーフェクト / クリーンマイルド / 1液 / NP-PT"
+          placeholder="日塗・関西・SK — 製品名で検索"
           class="product-search-input font-sans"
         />
         <div
@@ -1043,16 +1458,54 @@
           role="listbox"
         ></div>
       </label>
-      <p class="text-[10px] text-slate-500 text-center">または下の4段階から選択</p>
-      ${selectRow('1. メーカー', `${prefix}-mfr`)}
-      ${selectRow('2. 性質', `${prefix}-type`, true)}
-      ${selectRow('3. 製品名', `${prefix}-product`, true)}
-      ${selectRow('4. 色番号', `${prefix}-color`, true)}
+      <label class="block relative" id="${prefix}-color-search-wrap">
+        <span class="text-xs font-bold text-sky-400/90 mb-1 block">色番を検索</span>
+        <input
+          type="search"
+          id="${prefix}-color-search"
+          autocomplete="off"
+          enterkeyhint="search"
+          placeholder="日塗→ND / 関西→KP / SK→OSR"
+          class="product-search-input font-sans text-base"
+        />
+        <div
+          id="${prefix}-color-suggest"
+          class="product-suggest hidden absolute z-50 left-0 right-0 mt-1 bg-slate-800 border-2 border-sky-500/40 rounded-xl shadow-2xl"
+          role="listbox"
+        ></div>
+      </label>
+      <div id="${prefix}-color-chip" class="color-chip hidden">
+        <span id="${prefix}-color-chip-swatch" class="lab-swatch w-10 h-10 rounded-md shrink-0"></span>
+        <span class="flex-1 min-w-0">
+          <span id="${prefix}-color-chip-code" class="font-mono font-bold text-sm block text-slate-100"></span>
+          <span id="${prefix}-color-chip-name" class="text-[10px] text-slate-400 truncate block"></span>
+        </span>
+        <button type="button" id="${prefix}-color-clear" class="text-xs font-bold text-sky-400 px-2 py-1 shrink-0">変更</button>
+      </div>
+      <select id="${prefix}-color" class="sr-only" disabled tabindex="-1" aria-hidden="true">
+        <option value="">未選択</option>
+      </select>
+      <details class="manual-pick-fold mt-1">
+        <summary class="select-none py-1">手動でメーカー・製品を選ぶ</summary>
+        <div class="space-y-3 pt-2">
+          ${selectRow('メーカー', `${prefix}-mfr`)}
+          ${selectRow('性質', `${prefix}-type`, true)}
+          ${selectRow('製品名', `${prefix}-product`, true)}
+        </div>
+      </details>
     `;
     return {
       search: $(`${prefix}-product-search`),
       suggest: $(`${prefix}-product-suggest`),
       searchWrap: $(`${prefix}-search-wrap`),
+      colorSearch: $(`${prefix}-color-search`),
+      colorSuggest: $(`${prefix}-color-suggest`),
+      colorSearchWrap: $(`${prefix}-color-search-wrap`),
+      colorChip: $(`${prefix}-color-chip`),
+      colorChipSwatch: $(`${prefix}-color-chip-swatch`),
+      colorChipCode: $(`${prefix}-color-chip-code`),
+      colorChipName: $(`${prefix}-color-chip-name`),
+      colorClear: $(`${prefix}-color-clear`),
       mfr: $(`${prefix}-mfr`),
       type: $(`${prefix}-type`),
       product: $(`${prefix}-product`),
@@ -1085,6 +1538,69 @@
       picker[key].disabled = true;
       picker[key].value = '';
     }
+    if (start <= order.indexOf('product')) {
+      picker.colorSearch.value = '';
+      picker.colorSuggest.classList.add('hidden');
+      picker.colorChip.classList.add('hidden');
+    }
+  }
+
+  function colorSearchScope(picker) {
+    const scope = {};
+    if (picker.mfr.value) scope.mfrId = picker.mfr.value;
+    if (picker.type.value) scope.typeId = picker.type.value;
+    if (picker.product.value) scope.productId = picker.product.value;
+    return Object.keys(scope).length ? scope : null;
+  }
+
+  function syncColorToPicker(picker, entry) {
+    syncProductToPicker(
+      picker,
+      { mfrId: entry.mfrId, typeId: entry.typeId, product: entry.product },
+      false,
+    );
+    picker.color.value = entry.color.id;
+    picker.colorSearch.value = entry.color.code;
+  }
+
+  function renderColorSuggest(container, items, onPick) {
+    if (!items.length) {
+      container.innerHTML = '<p class="suggest-empty" role="status">該当なし。ND-223 のように入力</p>';
+      container.classList.remove('hidden');
+      return;
+    }
+    container.innerHTML = items.map((entry) => {
+      const mfr = ColorDatabase.manufacturers[entry.mfrId];
+      const { L, a, b } = entry.color.lab;
+      const rgb = labToRgb(L, a, b);
+      const badge =
+        entry.mfrId === 'nippon' ? '日塗' : entry.mfrId === 'kansai' ? '関西' : 'SK';
+      return `
+        <button type="button" role="option"
+          class="product-suggest-item w-full text-left px-3 py-2.5 border-b border-slate-700 last:border-0 hover:bg-slate-700/60 flex items-center gap-3"
+          data-mfr="${entry.mfrId}" data-type="${entry.typeId}" data-product="${entry.product.id}" data-color="${entry.color.id}">
+          <span class="lab-swatch w-9 h-9 rounded-md shrink-0" style="background:${rgb}"></span>
+          <span class="min-w-0 flex-1">
+            <span class="font-bold text-sm block text-slate-100 font-mono">${entry.color.code}</span>
+            <span class="text-[10px] text-slate-400 mt-0.5 block truncate">
+              ${badge} · ${entry.product.name} · L*${L.toFixed(0)}
+            </span>
+          </span>
+        </button>`;
+    }).join('');
+    container.classList.remove('hidden');
+    container.querySelectorAll('button').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const entry = ColorDatabase.colorCatalog.find(
+          (e) => e.mfrId === btn.dataset.mfr
+            && e.typeId === btn.dataset.type
+            && e.product.id === btn.dataset.product
+            && e.color.id === btn.dataset.color,
+        );
+        if (entry) onPick(entry);
+        container.classList.add('hidden');
+      });
+    });
   }
 
   /** 製品検索から階層セレクトを同期 */
@@ -1107,20 +1623,14 @@
     fillOptions(picker.color, colors, 'id', (c) => c.display);
     picker.color.disabled = false;
     picker.color.value = '';
-
-    if (focusColor) {
-      setTimeout(() => {
-        picker.color.focus();
-        try { picker.color.click(); } catch (_) { /* iOS */ }
-      }, 80);
-    }
+    updateColorChip(picker === pickers.current ? 'current' : 'target', null);
     return { mfr, type, product };
   }
 
   function renderProductSuggest(container, items, onPick) {
     if (!items.length) {
-      container.classList.add('hidden');
-      container.innerHTML = '';
+      container.innerHTML = '<p class="suggest-empty" role="status">該当なし。製品名・NP-PT などで検索</p>';
+      container.classList.remove('hidden');
       return;
     }
     container.innerHTML = items.map((entry) => {
@@ -1155,32 +1665,64 @@
   function wireProductSearch(picker, prefix, stateKey) {
     const { search, suggest, searchWrap } = picker;
 
-    search.addEventListener('input', () => {
+    const run = () => {
       const q = search.value.trim();
       if (!q) {
         suggest.classList.add('hidden');
         return;
       }
       renderProductSuggest(suggest, ColorDatabase.searchProducts(q), (entry) => {
-        syncProductToPicker(picker, entry, true);
+        syncProductToPicker(picker, entry, false);
         search.value = entry.product.name;
+        colorSearchFocus(picker);
         updateSelection(prefix, stateKey);
       });
-    });
+    };
 
-    search.addEventListener('focus', () => {
-      const q = search.value.trim();
-      if (q) {
-        renderProductSuggest(suggest, ColorDatabase.searchProducts(q), (entry) => {
-          syncProductToPicker(picker, entry, true);
-          search.value = entry.product.name;
-          updateSelection(prefix, stateKey);
-        });
-      }
-    });
+    search.addEventListener('input', debounce(run, 120));
+    search.addEventListener('focus', run);
 
     document.addEventListener('click', (e) => {
       if (!searchWrap.contains(e.target)) suggest.classList.add('hidden');
+    });
+  }
+
+  function colorSearchFocus(picker) {
+    setTimeout(() => picker.colorSearch.focus(), 60);
+  }
+
+  function wireColorSearch(picker, prefix, stateKey) {
+    const { colorSearch, colorSuggest, colorSearchWrap, colorClear } = picker;
+
+    const runSearch = () => {
+      const q = colorSearch.value.trim();
+      if (!q) {
+        colorSuggest.classList.add('hidden');
+        return;
+      }
+      renderColorSuggest(
+        colorSuggest,
+        ColorDatabase.searchColors(q, colorSearchScope(picker)),
+        (entry) => {
+          syncColorToPicker(picker, entry);
+          updateSelection(prefix, stateKey);
+        },
+      );
+    };
+
+    colorSearch.addEventListener('input', debounce(runSearch, 120));
+    colorSearch.addEventListener('focus', runSearch);
+
+    colorClear.addEventListener('click', () => {
+      picker.color.value = '';
+      picker.colorSearch.value = '';
+      picker.colorSearch.focus();
+      updateColorChip(prefix, null);
+      updateSelection(prefix, stateKey);
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!colorSearchWrap.contains(e.target)) colorSuggest.classList.add('hidden');
     });
   }
 
@@ -1228,9 +1770,34 @@
       updateSelection(prefix, stateKey);
     });
 
-    p.color.addEventListener('change', () => updateSelection(prefix, stateKey));
+    p.color.addEventListener('change', () => {
+      const opt = p.color.selectedOptions[0];
+      if (opt?.value) {
+        const col = ColorDatabase.colorByKey.get(opt.value);
+        if (col) p.colorSearch.value = col.code;
+      }
+      updateSelection(prefix, stateKey);
+    });
 
     wireProductSearch(p, prefix, stateKey);
+    wireColorSearch(p, prefix, stateKey);
+  }
+
+  function updatePolicyStatus() {
+    const ids = ['rule-disclaimer', ...RULE_IDS_2_5];
+    const n = ids.filter((id) => $(id).checked).length;
+    const el = $('policy-status');
+    const skipped = localStorage.getItem(POLICY_STORAGE_KEY) === todayISO();
+    if (n === 5) {
+      el.textContent = skipped ? '運用確認 完了（②〜⑤は今日省略）' : '運用確認 完了 ✓';
+      el.className = 'text-[10px] text-center text-emerald-400 font-bold';
+    } else if ($('rule-disclaimer').checked && skipped) {
+      el.textContent = '①完了 · ②〜⑤は今日省略中';
+      el.className = 'text-[10px] text-center text-emerald-400/80 font-medium';
+    } else {
+      el.textContent = `運用確認 ${n} / 5`;
+      el.className = 'text-[10px] text-center text-amber-500/80 font-medium';
+    }
   }
 
   function updateSelection(prefix, stateKey) {
@@ -1247,10 +1814,73 @@
       $(`${prefix}-preview-title`).textContent = `${sel.product.name} · ${sel.code}`;
       $(`${prefix}-preview-meta`).textContent =
         `${sel.mfr.name} / ${sel.type.label} / L*${sel.lab.L} a*${sel.lab.a} b*${sel.lab.b}`;
+      updateColorChip(prefix, sel.color);
     } else {
       preview.classList.add('hidden');
+      if (p.product.value && !p.color.value) updateColorChip(prefix, null);
     }
     updateUI();
+  }
+
+  function copyCurrentProductToTarget() {
+    const src = pickers.current;
+    if (!src.mfr.value || !src.product.value) {
+      const hint = $('calc-blocker-hint');
+      hint.textContent = '先に①現状の製品を選んでください';
+      hint.classList.remove('hidden');
+      return;
+    }
+    const prod = ColorDatabase.getProducts(src.mfr.value, src.type.value)
+      .find((x) => x.id === src.product.value);
+    syncProductToPicker(
+      pickers.target,
+      { mfrId: src.mfr.value, typeId: src.type.value, product: prod },
+      false,
+    );
+    pickers.target.search.value = prod.name;
+    pickers.target.color.value = '';
+    pickers.target.colorSearch.value = '';
+    updateColorChip('target', null);
+    updateSelection('target', 'target');
+    colorSearchFocus(pickers.target);
+  }
+
+  function refreshFieldPolicyUI() {
+    const { current, target } = state;
+    const ctx = FieldPolicy.analyzeSelection(current, target);
+    const extremeEl = $('extreme-color-alert');
+    const hintEl = $('calc-blocker-hint');
+
+    if (ctx.hasExtreme) {
+      extremeEl.classList.remove('hidden');
+      $('extreme-color-detail').textContent = ctx.extreme
+        .map((x) => `${x.role} ${x.code}（L*${x.lab.L.toFixed(1)}）`)
+        .join(' · ')
+        + ' — 推奨範囲は L*35〜88（淡色〜中間色）です。';
+    } else {
+      extremeEl.classList.add('hidden');
+      $('rule-extreme-ack').checked = false;
+    }
+
+    const mass = parseFloat($('mass-input').value);
+    const massOk = Number.isFinite(mass) && mass > 0;
+    const blocker = getCalcBlockerDetail(current, target);
+    const canCalc =
+      current && target && massOk && !isIncompatible(current, target)
+      && FieldPolicy.allRulesChecked()
+      && FieldPolicy.extremeAckedIfNeeded(ctx);
+
+    $('calc-btn').disabled = !canCalc;
+    if (blocker && !canCalc) {
+      hintEl.textContent = blocker;
+      hintEl.classList.remove('hidden');
+    } else {
+      hintEl.classList.add('hidden');
+    }
+    if (!canCalc) $('result-panel').classList.add('hidden');
+    updatePolicyStatus();
+    updateFlowProgress();
+    updateMfrChipHighlight();
   }
 
   function updateUI() {
@@ -1262,18 +1892,26 @@
       $('compat-detail').textContent =
         `${current.type.label}（${current.product.name}）↔ ${target.type.label}（${target.product.name}）`;
     } else warn.classList.add('hidden');
-
-    const mass = parseFloat($('mass-input').value);
-    const agreed = $('disclaimer-agree').checked;
-    const ok = current && target && !bad && mass > 0 && agreed;
-    $('calc-btn').disabled = !ok;
-    if (!ok) $('result-panel').classList.add('hidden');
+    const copyBtn = $('copy-product-btn');
+    if (copyBtn) {
+      copyBtn.disabled = !(pickers.current.mfr.value && pickers.current.product.value);
+    }
+    refreshFieldPolicyUI();
   }
 
   wirePicker('current', 'current');
   wirePicker('target', 'target');
   $('mass-input').addEventListener('input', updateUI);
-  $('disclaimer-agree').addEventListener('change', updateUI);
+  [
+    'rule-disclaimer',
+    ...RULE_IDS_2_5,
+    'rule-extreme-ack',
+  ].forEach((id) => $(id).addEventListener('change', updateUI));
+  $('policy-remember-day').addEventListener('change', () => {
+    syncPolicyRememberStorage();
+    updateUI();
+  });
+  $('copy-product-btn').addEventListener('click', copyCurrentProductToTarget);
 
   const TONER_UI = [
     { key: 'black', label: '黒', color: 'bg-slate-950 border-slate-600 text-slate-100' },
@@ -1299,17 +1937,21 @@
   }
 
   const FIELD_WORKFLOW = [
-    '1. 必ず<strong class="text-slate-200">同じ製品・同じ希釈</strong>で試し塗り板を作る',
-    '2. トナーは<strong class="text-slate-200">0.01g単位</strong>で少しずつ足し、都度攪拌',
-    '3. 乾燥後（水性は24h以上）に目視・色差を確認してから本塗り',
-    '4. 本結果は記録用メモ。採用可否は現場責任者が判断',
+    '【③】<strong class="text-slate-200">同じ製品・同じ希釈</strong>で試し塗り板を作成',
+    '【③】トナーは<strong class="text-slate-200">0.01g単位</strong>で段階投入し都度攪拌',
+    '【③】<strong class="text-slate-200">乾燥後</strong>（水性は24h以上）に目視・色差を確認してから本塗り',
+    '【⑤】公式カタログ・過去調色メモと色番を突き合わせて記録',
+    '採用可否は<strong class="text-slate-200">現場責任者</strong>が最終判断',
   ];
 
   $('calc-btn').addEventListener('click', () => {
     const { current, target } = state;
-    if (!current || !target || !$('disclaimer-agree').checked) return;
+    const ctx = FieldPolicy.analyzeSelection(current, target);
+    if (!current || !target || !FieldPolicy.allRulesChecked()) return;
+    if (!FieldPolicy.extremeAckedIfNeeded(ctx)) return;
     const baseG = parseFloat($('mass-input').value);
     const r = MixingEngine.calculate(current, target, baseG);
+    const policy = FieldPolicy.applyResultPolicy(r, ctx);
 
     const notice = $('white-base-notice');
     if (r.needsWhiteBase) {
@@ -1319,20 +1961,38 @@
       notice.classList.add('hidden');
     }
 
+    const guidanceBanner = $('de-guidance-only-banner');
+    const guidanceOverlay = $('toner-guidance-overlay');
+    if (policy.guidanceOnly || r.confidence.guidanceOnly) {
+      guidanceBanner.classList.remove('hidden');
+      guidanceOverlay.classList.remove('hidden');
+      $('toner-results-caption').textContent = '【運用則②】目安のみ — 試し塗りで再調整必須';
+      $('toner-results-caption').className = 'text-[10px] text-red-400 text-center mb-3 font-bold';
+    } else {
+      guidanceBanner.classList.add('hidden');
+      guidanceOverlay.classList.add('hidden');
+      $('toner-results-caption').textContent = '理論値 · 試し塗りで必ず確認';
+      $('toner-results-caption').className = 'text-[10px] text-slate-500 text-center mb-3';
+    }
+
     const confEl = $('result-confidence');
     confEl.className = `rounded-xl border-2 px-4 py-3 text-center text-sm font-bold ${r.confidence.boxClass}`;
     confEl.textContent = r.confidence.label;
     confEl.classList.remove('hidden');
 
     const tipsEl = $('result-field-tips');
-    const tipLines = [...FIELD_WORKFLOW];
+    const tipLines = [policy.testcoatNote, ...FIELD_WORKFLOW];
+    if (!ctx.recommendedOnly) {
+      tipLines.unshift('【④】淡色・中間色以外のため、職人判断を厚くしてください');
+    }
     r.confidence.notes.forEach((n) => tipLines.push(`⚠ ${n}`));
-    tipsEl.innerHTML = `<p class="font-bold text-slate-400 mb-2">現場手順（必須）</p><ul class="list-decimal pl-4 space-y-1">${tipLines.map((t) => `<li>${t}</li>`).join('')}</ul>`;
+    tipsEl.innerHTML = `<ul class="list-disc pl-4 space-y-1">${tipLines.map((t) => `<li>${t}</li>`).join('')}</ul>`;
     tipsEl.classList.remove('hidden');
 
-    $('result-legal-reminder').textContent =
-      '※本配合は保証されません。試し塗り・現場判断なしの施工は自己責任です。';
+    $('result-legal-reminder').innerHTML =
+      '※非保証·ΔE&gt;3は目安·試し塗り必須·カタログ突合·自己責任';
     $('result-legal-reminder').classList.remove('hidden');
+    $('result-catalog-reminder').classList.remove('hidden');
 
     renderTonerResults(r.toners);
     const deEl = $('result-de');
@@ -1362,12 +2022,15 @@
       .join('<br>');
 
     $('result-panel').classList.remove('hidden');
-    $('result-panel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    $('result-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
 
   $('db-stats').textContent =
-    `IRO-HACK v3.1現場版 · 色 ${ColorDatabase.totalColors.toLocaleString()} · 免責同意必須`;
+    `IRO-HACK v3.5 · 色 ${ColorDatabase.totalColors.toLocaleString()}`;
 
+  initMfrQuickPick();
+  applyPolicyRememberFromStorage();
+  refreshFieldPolicyUI();
   updateUI();
 })();
 </script>
