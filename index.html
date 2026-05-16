@@ -154,18 +154,6 @@
     .flow-step.active { color: #fbbf24; background: rgba(251, 191, 36, 0.12); }
     .toner-gram-hero { font-size: clamp(2.75rem, 10vw, 3.75rem); line-height: 1; letter-spacing: -0.02em; }
     .toner-unit-hero { font-size: clamp(1.5rem, 5vw, 2rem); line-height: 1; }
-    .affiliate-card {
-      background: linear-gradient(145deg, rgba(30, 41, 59, 0.95), rgba(120, 53, 15, 0.15));
-      border: 2px solid rgba(251, 191, 36, 0.35);
-    }
-    .affiliate-amazon-btn {
-      transition: background-color 0.2s, transform 0.15s, box-shadow 0.2s;
-    }
-    .affiliate-amazon-btn:hover {
-      background-color: #fbbf24;
-      box-shadow: 0 4px 20px rgba(251, 191, 36, 0.35);
-    }
-    .affiliate-amazon-btn:active { transform: scale(0.98); }
     @media (max-width: 640px) {
       .text-mega { font-size: 2.5rem; }
     }
@@ -323,21 +311,24 @@
         <div id="toner-results" class="space-y-3"></div>
       </div>
 
-      <div id="affiliate-gear-wrap" class="hidden space-y-3">
-        <article id="affiliate-gear-card" class="affiliate-card rounded-2xl p-4 shadow-lg">
-          <p class="text-amber-400 text-xs font-black tracking-wide mb-2">【現場推奨】</p>
+      <div id="affiliate-gear-wrap" class="hidden space-y-2">
+        <article
+          id="affiliate-gear-card"
+          class="bg-slate-800 border border-amber-500/30 rounded-xl p-4 shadow-lg"
+        >
           <p class="text-slate-100 font-bold text-sm leading-relaxed mb-4">
-            0.01g単位で正確に調色するための防塵・防水デジタルスケール
+            <span class="text-amber-400 font-black">【現場推奨】</span>0.01g単位で正確に調色・配合するための精密デジタルスケール（防塵・カバー付き）
           </p>
           <a
-            href="#"
-            class="affiliate-amazon-btn block w-full text-center py-3.5 rounded-xl font-black text-base bg-amber-600 text-slate-900"
-            rel="nofollow sponsored"
-            onclick="return false;"
-          >Amazonで詳細を見る</a>
+            id="affiliate-amazon-link"
+            href="https://www.amazon.co.jp/s?k=デジタルスケール+0.01g+防塵&amp;tag=irohack0d-22"
+            target="_blank"
+            rel="noopener noreferrer sponsored"
+            class="bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold py-4 px-6 rounded-lg text-center block w-full transition-colors text-base sm:text-lg"
+          >Amazonで計量器を見る ➔</a>
         </article>
         <p id="result-theory-disclaimer" class="text-xs text-slate-400 leading-relaxed px-1">
-          ※本アプリの計算結果はクベルカ・ムンク理論に基づく論理値です。塗料のロットや現場の乾燥環境、下地の色によって差異が生じるため、必ず少量での試し塗りと現場での微調整を行ってください。
+          ※本計算は理論値です。現場の環境や塗料の状態に合わせて微調整を行ってください。
         </p>
       </div>
 
@@ -2130,7 +2121,7 @@
   $('reset-btn').addEventListener('click', resetApp);
 
   $('db-stats').textContent =
-    `IRO-HACK v3.6 · 色 ${ColorDatabase.totalColors.toLocaleString()}`;
+    `IRO-HACK v3.7 · 色 ${ColorDatabase.totalColors.toLocaleString()}`;
 
   initMfrQuickPick();
   applyPolicyRememberFromStorage();
