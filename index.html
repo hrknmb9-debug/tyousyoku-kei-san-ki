@@ -4,43 +4,214 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>IRO-HACK | 職人向け逆引き調色計算</title>
+  <script>
+    (function () {
+      var k = 'irohack-theme';
+      var s = localStorage.getItem(k);
+      var t = s === 'light' || s === 'dark' ? s : 'light';
+      document.documentElement.dataset.theme = t;
+    })();
+  </script>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <script>
     tailwind.config = {
       theme: {
         extend: {
+          fontFamily: { sans: ['Outfit', 'system-ui', 'sans-serif'] },
           fontSize: {
             field: ['1.2rem', { lineHeight: '1.5' }],
             mega: ['3.25rem', { lineHeight: '1' }],
+          },
+          boxShadow: {
+            glow: '0 0 40px rgba(251, 191, 36, 0.15)',
+            card: '0 8px 32px rgba(0, 0, 0, 0.35)',
           },
         },
       },
     };
   </script>
   <style>
+    :root,
+    [data-theme="dark"] {
+      color-scheme: dark;
+      --bg-deep: #070b14;
+      --bg-glow-1: rgba(245, 158, 11, 0.09);
+      --bg-glow-2: rgba(56, 189, 248, 0.06);
+      --bg-glow-3: rgba(167, 139, 250, 0.05);
+      --accent: #f59e0b;
+      --accent-glow: rgba(245, 158, 11, 0.35);
+      --glass: rgba(15, 23, 42, 0.55);
+      --glass-border: rgba(148, 163, 184, 0.14);
+      --surface-inset: rgba(2, 6, 23, 0.6);
+      --surface-muted: rgba(15, 23, 42, 0.4);
+      --sticky-bg: rgba(7, 11, 20, 0.88);
+      --header-bg: rgba(7, 11, 20, 0.75);
+      --text-strong: #f8fafc;
+      --text-body: #e2e8f0;
+      --text-muted: #94a3b8;
+      --text-faint: #64748b;
+      --input-text: #fef3c7;
+      --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.28);
+      --blur-strength: 16px;
+      --step-badge-bg: linear-gradient(135deg, rgba(245, 158, 11, 0.25), rgba(245, 158, 11, 0.08));
+      --step-badge-color: #fcd34d;
+      --step-badge-border: rgba(245, 158, 11, 0.35);
+      --flow-arrow: #334155;
+      --btn-ghost-bg: rgba(51, 65, 85, 0.4);
+      --btn-ghost-hover: rgba(71, 85, 105, 0.5);
+      --btn-disabled-bg: #334155;
+      --btn-disabled-text: #64748b;
+      --mfr-chip-bg: rgba(15, 23, 42, 0.6);
+      --mfr-chip-hover: rgba(30, 41, 59, 0.7);
+      --result-hero-bg: linear-gradient(165deg, rgba(30, 41, 59, 0.6) 0%, rgba(7, 11, 20, 0.8) 100%);
+      --affiliate-bg: linear-gradient(145deg, rgba(30, 41, 59, 0.7), rgba(120, 53, 15, 0.12));
+      --toner-shadow: 0 0 40px currentColor;
+      --header-divider: rgba(255, 255, 255, 0.05);
+      --radius-lg: 1.25rem;
+    }
+    [data-theme="light"] {
+      color-scheme: light;
+      --bg-deep: #eef2f7;
+      --bg-glow-1: rgba(245, 158, 11, 0.05);
+      --bg-glow-2: transparent;
+      --bg-glow-3: transparent;
+      --accent-glow: rgba(245, 158, 11, 0.22);
+      --glass: #ffffff;
+      --glass-border: #e2e8f0;
+      --surface-inset: #ffffff;
+      --surface-muted: #f8fafc;
+      --sticky-bg: rgba(255, 255, 255, 0.96);
+      --header-bg: rgba(255, 255, 255, 0.92);
+      --text-strong: #0f172a;
+      --text-body: #334155;
+      --text-muted: #64748b;
+      --text-faint: #94a3b8;
+      --input-text: #b45309;
+      --card-shadow: 0 1px 4px rgba(15, 23, 42, 0.07);
+      --blur-strength: 0px;
+      --step-badge-bg: #fff7ed;
+      --step-badge-color: #b45309;
+      --step-badge-border: #fcd34d;
+      --flow-arrow: #cbd5e1;
+      --btn-ghost-bg: #f1f5f9;
+      --btn-ghost-hover: #e2e8f0;
+      --btn-disabled-bg: #e2e8f0;
+      --btn-disabled-text: #94a3b8;
+      --mfr-chip-bg: #ffffff;
+      --mfr-chip-hover: #f8fafc;
+      --result-hero-bg: linear-gradient(165deg, #ffffff 0%, #f8fafc 100%);
+      --affiliate-bg: linear-gradient(145deg, #ffffff, #fffbeb);
+      --toner-shadow: none;
+      --header-divider: #e2e8f0;
+    }
     html { -webkit-tap-highlight-color: transparent; }
-    .lab-swatch { box-shadow: inset 0 0 0 2px rgba(255,255,255,.12); }
+    body {
+      font-family: 'Outfit', system-ui, sans-serif;
+      color: var(--text-body);
+      background: var(--bg-deep);
+      background-image:
+        radial-gradient(ellipse 90% 55% at 50% -15%, var(--bg-glow-1), transparent 55%),
+        radial-gradient(ellipse 50% 40% at 100% 30%, var(--bg-glow-2), transparent),
+        radial-gradient(ellipse 40% 35% at 0% 70%, var(--bg-glow-3), transparent);
+      transition: background-color 0.25s, color 0.2s;
+    }
+    [data-theme="light"] .glass-card,
+    [data-theme="light"] .app-header,
+    [data-theme="light"] #calc-sticky-inner,
+    [data-theme="light"] #flow-progress {
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+    }
+    .lab-swatch {
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.15), 0 4px 12px rgba(0,0,0,.35);
+    }
+    .glass-card {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-lg);
+      backdrop-filter: blur(var(--blur-strength));
+      -webkit-backdrop-filter: blur(var(--blur-strength));
+      box-shadow: var(--card-shadow);
+      transition: background 0.25s, border-color 0.25s, box-shadow 0.25s;
+    }
+    .section-head {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      margin-bottom: 0.25rem;
+    }
+    .step-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.75rem;
+      height: 1.75rem;
+      border-radius: 0.5rem;
+      font-size: 0.7rem;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      background: var(--step-badge-bg);
+      border: 1px solid var(--step-badge-border);
+      color: var(--step-badge-color);
+      flex-shrink: 0;
+    }
+    .section-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: var(--text-strong);
+    }
+    .theme-switch {
+      display: flex;
+      padding: 0.2rem;
+      border-radius: 0.65rem;
+      border: 1px solid var(--glass-border);
+      background: var(--surface-muted);
+      gap: 0.15rem;
+    }
+    .theme-switch-btn {
+      padding: 0.35rem 0.55rem;
+      border-radius: 0.5rem;
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+      transition: background 0.2s, color 0.2s;
+    }
+    .theme-switch-btn[aria-pressed="true"] {
+      background: var(--glass);
+      color: var(--text-strong);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    }
+    [data-theme="dark"] .theme-switch-btn[data-theme-set="dark"][aria-pressed="true"],
+    [data-theme="light"] .theme-switch-btn[data-theme-set="light"][aria-pressed="true"] {
+      color: #b45309;
+    }
     /* OSネイティブピッカー向け */
     .native-select {
       display: block;
       width: 100%;
       min-height: 3.25rem;
       padding: 0.65rem 2.25rem 0.65rem 0.85rem;
-      font-size: 1.125rem;
+      font-size: 1.05rem;
       font-weight: 600;
       line-height: 1.35;
-      color: #f1f5f9;
-      background-color: #1e293b;
-      border: 2px solid #475569;
-      border-radius: 0.75rem;
+      color: var(--text-strong);
+      background: var(--surface-inset);
+      border: 1px solid var(--glass-border);
+      border-radius: 0.85rem;
       -webkit-appearance: menulist;
       appearance: menulist;
       cursor: pointer;
+      transition: border-color 0.2s, box-shadow 0.2s;
     }
     .native-select:focus {
       outline: none;
-      border-color: #fbbf24;
-      box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.25);
+      border-color: rgba(245, 158, 11, 0.5);
+      box-shadow: 0 0 0 3px var(--accent-glow);
     }
     .native-select:disabled {
       opacity: 0.45;
@@ -54,18 +225,20 @@
       width: 100%;
       min-height: 3.25rem;
       padding: 0.75rem 1rem;
-      font-size: 1.125rem;
+      font-size: 1.05rem;
       font-weight: 600;
-      color: #f1f5f9;
-      background-color: #0f172a;
-      border: 2px solid #64748b;
-      border-radius: 0.75rem;
+      color: var(--text-strong);
+      background: var(--surface-inset);
+      border: 1px solid var(--glass-border);
+      border-radius: 0.85rem;
       outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
     }
     .product-search-input:focus {
-      border-color: #fbbf24;
-      box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.2);
+      border-color: rgba(245, 158, 11, 0.45);
+      box-shadow: 0 0 0 3px var(--accent-glow);
     }
+    .product-search-input::placeholder { color: var(--text-faint); font-weight: 500; }
     .product-suggest {
       max-height: 16rem;
       overflow-y: auto;
@@ -74,7 +247,9 @@
     .product-suggest-item {
       min-height: 3.25rem;
     }
-    .product-suggest-item:active { background: #334155; }
+    .product-suggest-item { transition: background 0.15s; }
+    .product-suggest-item:hover,
+    .product-suggest-item:active { background: var(--btn-ghost-hover); }
     .legal-scroll { max-height: 8rem; overflow-y: auto; -webkit-overflow-scrolling: touch; }
     .policy-fold > summary { list-style: none; cursor: pointer; }
     .policy-fold > summary::-webkit-details-marker { display: none; }
@@ -93,7 +268,7 @@
       white-space: nowrap;
       border: 0;
     }
-    .manual-pick-fold > summary { list-style: none; cursor: pointer; font-size: 0.7rem; color: #64748b; }
+    .manual-pick-fold > summary { list-style: none; cursor: pointer; font-size: 0.7rem; color: var(--text-faint); }
     .manual-pick-fold > summary::-webkit-details-marker { display: none; }
     .manual-pick-fold > summary::after { content: ' ▾'; opacity: 0.6; }
     .manual-pick-fold[open] > summary::after { content: ' ▴'; }
@@ -101,12 +276,18 @@
       display: flex;
       align-items: center;
       gap: 0.75rem;
-      padding: 0.65rem 0.85rem;
-      border-radius: 0.75rem;
-      border: 2px solid #0ea5e9;
-      background: rgba(14, 165, 233, 0.08);
+      padding: 0.75rem 1rem;
+      border-radius: 0.85rem;
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      background: linear-gradient(135deg, rgba(14, 165, 233, 0.12), rgba(14, 165, 233, 0.04));
+      box-shadow: 0 4px 16px rgba(14, 165, 233, 0.08);
     }
-    .suggest-empty { padding: 0.85rem 1rem; font-size: 0.8rem; color: #94a3b8; text-align: center; }
+    .preview-card {
+      background: var(--surface-inset);
+      border: 1px solid var(--glass-border);
+      border-radius: 0.85rem;
+    }
+    .suggest-empty { padding: 0.85rem 1rem; font-size: 0.8rem; color: var(--text-muted); text-align: center; }
     #calc-sticky {
       position: fixed;
       left: 0;
@@ -120,57 +301,161 @@
       max-width: 32rem;
       margin: 0 auto;
       pointer-events: auto;
-      background: rgba(15, 23, 42, 0.96);
-      border: 2px solid #475569;
-      border-radius: 1rem;
-      padding: 0.65rem 0.75rem 0.75rem;
-      box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.45);
-      backdrop-filter: blur(8px);
+      background: var(--sticky-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 1.25rem;
+      padding: 0.75rem 0.85rem 0.85rem;
+      box-shadow: var(--card-shadow);
+      backdrop-filter: blur(var(--blur-strength));
+      -webkit-backdrop-filter: blur(var(--blur-strength));
+      transition: background 0.25s, border-color 0.25s;
     }
+    .btn-primary {
+      background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #ea580c 100%);
+      color: #0f172a;
+      font-weight: 800;
+      box-shadow: 0 4px 20px var(--accent-glow);
+      transition: transform 0.15s, box-shadow 0.2s, filter 0.2s;
+    }
+    .btn-primary:hover:not(:disabled) {
+      filter: brightness(1.06);
+      box-shadow: 0 6px 28px var(--accent-glow);
+    }
+    .btn-primary:active:not(:disabled) { transform: scale(0.98); }
+    .btn-primary:disabled {
+      background: var(--btn-disabled-bg);
+      color: var(--btn-disabled-text);
+      box-shadow: none;
+    }
+    .btn-ghost {
+      background: var(--btn-ghost-bg);
+      border: 1px solid var(--glass-border);
+      color: var(--text-body);
+      transition: background 0.2s, border-color 0.2s, transform 0.15s;
+    }
+    .btn-ghost:hover { background: var(--btn-ghost-hover); border-color: var(--glass-border); }
+    .btn-ghost:active { transform: scale(0.98); }
     .mfr-chip {
       flex: 1;
       min-width: 0;
       max-width: 7.5rem;
-      padding: 0.35rem 0.5rem;
-      border-radius: 0.5rem;
-      border: 1px solid #475569;
-      background: #1e293b;
+      padding: 0.45rem 0.5rem;
+      border-radius: 0.65rem;
+      border: 1px solid var(--glass-border);
+      background: var(--mfr-chip-bg);
       text-align: center;
-      transition: border-color 0.15s, background 0.15s;
+      transition: border-color 0.2s, background 0.2s, transform 0.15s, box-shadow 0.2s;
     }
+    .mfr-chip:hover { border-color: var(--glass-border); background: var(--mfr-chip-hover); }
     .mfr-chip:active { transform: scale(0.97); }
     .mfr-chip-active {
-      border-color: #fbbf24;
-      background: rgba(251, 191, 36, 0.12);
-      box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.35);
+      border-color: rgba(245, 158, 11, 0.55);
+      background: linear-gradient(180deg, rgba(245, 158, 11, 0.18), rgba(245, 158, 11, 0.06));
+      box-shadow: 0 0 20px rgba(245, 158, 11, 0.15);
     }
     .mfr-chip-abbr { display: block; font-size: 0.7rem; font-weight: 800; line-height: 1.2; }
-    .mfr-chip-name { display: block; font-size: 0.55rem; color: #94a3b8; line-height: 1.2; margin-top: 0.1rem; }
+    .mfr-chip-name { display: block; font-size: 0.55rem; color: var(--text-muted); line-height: 1.2; margin-top: 0.1rem; }
     .mfr-chip[data-mfr="nippon"] .mfr-chip-abbr { color: #93c5fd; }
     .mfr-chip[data-mfr="kansai"] .mfr-chip-abbr { color: #86efac; }
     .mfr-chip[data-mfr="sk"] .mfr-chip-abbr { color: #c4b5fd; }
-    .flow-step { padding: 0.15rem 0.45rem; border-radius: 0.35rem; color: #64748b; }
-    .flow-step.done { color: #34d399; background: rgba(52, 211, 153, 0.1); }
-    .flow-step.active { color: #fbbf24; background: rgba(251, 191, 36, 0.12); }
-    .toner-gram-hero { font-size: clamp(2.75rem, 10vw, 3.75rem); line-height: 1; letter-spacing: -0.02em; }
-    .toner-unit-hero { font-size: clamp(1.5rem, 5vw, 2rem); line-height: 1; }
+    #flow-progress {
+      padding: 0.5rem 0.75rem;
+      background: var(--surface-muted);
+      border: 1px solid var(--glass-border);
+      border-radius: 9999px;
+    }
+    .flow-step {
+      padding: 0.2rem 0.55rem;
+      border-radius: 9999px;
+      color: var(--text-faint);
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      transition: color 0.2s, background 0.2s;
+    }
+    .flow-step.done { color: #6ee7b7; background: rgba(52, 211, 153, 0.12); }
+    .flow-step.active { color: #fcd34d; background: rgba(245, 158, 11, 0.15); }
+    .flow-arrow { color: var(--flow-arrow); font-size: 0.55rem; }
+    .toner-result-card {
+      border-radius: 1rem;
+      padding: 1rem 1.15rem;
+      border: 1px solid var(--glass-border);
+      background: var(--surface-inset);
+    }
+    .toner-gram-hero {
+      font-size: clamp(2.75rem, 10vw, 3.75rem);
+      line-height: 1;
+      letter-spacing: -0.03em;
+      text-shadow: var(--toner-shadow);
+    }
+    .toner-unit-hero { font-size: clamp(1.5rem, 5vw, 2rem); line-height: 1; font-weight: 800; }
+    .result-hero-wrap {
+      border: 1px solid rgba(245, 158, 11, 0.25);
+      background: var(--result-hero-bg);
+      box-shadow: var(--card-shadow);
+    }
+    .stat-pill {
+      background: var(--surface-inset);
+      border: 1px solid var(--glass-border);
+      border-radius: 0.85rem;
+    }
+    .affiliate-card-stylish {
+      background: var(--affiliate-bg);
+      border: 1px solid rgba(245, 158, 11, 0.28);
+      box-shadow: var(--card-shadow);
+    }
+    .app-header {
+      background: var(--header-bg);
+      border-bottom: 1px solid var(--glass-border);
+      backdrop-filter: blur(var(--blur-strength));
+      -webkit-backdrop-filter: blur(var(--blur-strength));
+      transition: background 0.25s;
+    }
+    .logo-mark {
+      background: linear-gradient(135deg, #fde68a 0%, #f59e0b 45%, #ea580c 100%);
+      box-shadow: 0 4px 16px var(--accent-glow);
+    }
+    .mass-input-hero {
+      background: var(--surface-inset);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-lg);
+      color: var(--input-text);
+      transition: border-color 0.2s, box-shadow 0.2s, background 0.25s;
+    }
+    .mass-input-hero:focus {
+      border-color: rgba(245, 158, 11, 0.45);
+      box-shadow: 0 0 0 4px var(--accent-glow);
+    }
+    [data-theme="light"] .text-slate-100,
+    [data-theme="light"] .text-slate-200,
+    [data-theme="light"] .text-slate-300 { color: var(--text-strong) !important; }
+    [data-theme="light"] .text-slate-400,
+    [data-theme="light"] .text-slate-500 { color: var(--text-muted) !important; }
+    [data-theme="light"] .text-slate-600 { color: var(--text-faint) !important; }
+    [data-theme="light"] .border-white\/5 { border-color: var(--header-divider) !important; }
+    [data-theme="light"] .text-amber-100 { color: var(--input-text) !important; }
+    #result-panel { scroll-margin-top: 4.5rem; scroll-margin-bottom: 10rem; }
+    #affiliate-gear-wrap { scroll-margin-bottom: 10rem; }
     @media (max-width: 640px) {
       .text-mega { font-size: 2.5rem; }
     }
   </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen font-sans antialiased">
+<body class="min-h-screen antialiased">
 
-  <header class="border-b border-slate-700 bg-slate-950/95 sticky top-0 z-40 px-4 py-2.5 backdrop-blur-sm">
+  <header class="app-header sticky top-0 z-40 px-4 py-3">
     <div class="flex items-center gap-3 max-w-lg mx-auto">
-      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center text-slate-900 font-black shrink-0 text-sm">IH</div>
+      <div class="logo-mark w-10 h-10 rounded-xl flex items-center justify-center text-slate-900 font-extrabold shrink-0 text-sm tracking-tight">IH</div>
       <div class="flex-1 min-w-0">
-        <h1 class="text-lg font-black text-amber-400 leading-tight">IRO-HACK</h1>
-        <p class="text-[10px] text-slate-500 leading-tight">参考配合 · 試し塗り必須</p>
+        <h1 class="text-lg font-extrabold tracking-tight leading-tight bg-gradient-to-r from-amber-200 to-amber-500 bg-clip-text text-transparent">IRO-HACK</h1>
+        <p class="text-[10px] text-slate-500 leading-tight tracking-wide uppercase">Color Mix Lab</p>
+      </div>
+      <div class="theme-switch shrink-0" role="group" aria-label="表示モード">
+        <button type="button" class="theme-switch-btn" data-theme-set="light" aria-pressed="false">ライト</button>
+        <button type="button" class="theme-switch-btn" data-theme-set="dark" aria-pressed="false">ダーク</button>
       </div>
     </div>
-    <div class="max-w-lg mx-auto mt-2 pt-2 border-t border-slate-800" aria-label="対応メーカー">
-      <p class="text-[9px] text-slate-500 text-center mb-1.5 tracking-wide">対応メーカー · 色番体系</p>
+    <div class="max-w-lg mx-auto mt-3 pt-3 border-t border-white/5" aria-label="対応メーカー">
+      <p class="text-[9px] text-slate-500 text-center mb-2 tracking-[0.12em] uppercase font-semibold">対応メーカー</p>
       <div class="flex gap-1.5 justify-center" role="group">
         <button type="button" class="mfr-chip" data-mfr="nippon" title="日本ペイント（ND色・日塗工）を①現状にセット">
           <span class="mfr-chip-abbr">日塗</span>
@@ -192,19 +477,22 @@
   <main class="max-w-lg mx-auto px-4 py-4 space-y-5 pb-44">
     <div id="flow-progress" class="flex flex-wrap items-center justify-center gap-x-1 gap-y-0.5 text-[10px] font-bold" aria-label="入力の進捗">
       <span id="flow-step-1" class="flow-step active">①現状</span>
-      <span class="text-slate-600">→</span>
+      <span class="flow-arrow">→</span>
       <span id="flow-step-2" class="flow-step">②残量</span>
-      <span class="text-slate-600">→</span>
+      <span class="flow-arrow">→</span>
       <span id="flow-step-3" class="flow-step">③目標</span>
-      <span class="text-slate-600">→</span>
+      <span class="flow-arrow">→</span>
       <span id="flow-step-4" class="flow-step">算出</span>
     </div>
 
     <!-- 現状 -->
-    <section class="bg-slate-800/40 border border-slate-700 rounded-2xl p-4 space-y-3">
-      <h2 class="text-lg font-black text-amber-300">① 現状の塗料</h2>
+    <section class="glass-card p-4 space-y-3">
+      <div class="section-head">
+        <span class="step-badge">1</span>
+        <h2 class="section-title">現状の塗料</h2>
+      </div>
       <div id="current-picker" class="space-y-3"></div>
-      <div id="current-preview" class="hidden flex items-center gap-3 bg-slate-900/60 rounded-xl p-3 border border-slate-600">
+      <div id="current-preview" class="hidden preview-card flex items-center gap-3 p-3">
         <div id="current-swatch" class="lab-swatch w-12 h-12 rounded-lg shrink-0"></div>
         <div class="flex-1 min-w-0 text-sm">
           <p id="current-preview-title" class="font-bold truncate"></p>
@@ -214,23 +502,29 @@
     </section>
 
     <!-- 残量 -->
-    <section>
-      <label for="mass-input" class="block text-field font-bold text-amber-300 mb-2">② 残量（g）</label>
+    <section class="glass-card p-4">
+      <div class="section-head mb-3">
+        <span class="step-badge">2</span>
+        <label for="mass-input" class="section-title">残量（g）</label>
+      </div>
       <input type="number" id="mass-input" inputmode="decimal" min="1" step="1" value="500"
-        class="w-full text-mega font-black font-mono bg-slate-800 border-2 border-slate-600 focus:border-amber-400 rounded-xl px-4 py-4 text-center outline-none" />
+        class="mass-input-hero w-full text-mega font-extrabold font-mono px-4 py-4 text-center outline-none" />
     </section>
 
     <!-- 目標 -->
-    <section class="bg-slate-800/40 border border-slate-700 rounded-2xl p-4 space-y-3">
+    <section class="glass-card p-4 space-y-3">
       <div class="flex items-center justify-between gap-2 flex-wrap">
-        <h2 class="text-lg font-black text-amber-300">③ 目標の塗料</h2>
+        <div class="section-head">
+          <span class="step-badge">3</span>
+          <h2 class="section-title">目標の塗料</h2>
+        </div>
         <button type="button" id="copy-product-btn"
-          class="text-xs font-bold px-3 py-2 rounded-lg bg-sky-600/30 border border-sky-500/50 text-sky-200 active:scale-[0.98] disabled:opacity-40 disabled:pointer-events-none">
+          class="btn-ghost text-xs font-bold px-3 py-2 rounded-lg disabled:opacity-40 disabled:pointer-events-none">
           現状と同じ製品
         </button>
       </div>
       <div id="target-picker" class="space-y-3"></div>
-      <div id="target-preview" class="hidden flex items-center gap-3 bg-slate-900/60 rounded-xl p-3 border border-slate-600">
+      <div id="target-preview" class="hidden preview-card flex items-center gap-3 p-3">
         <div id="target-swatch" class="lab-swatch w-12 h-12 rounded-lg shrink-0"></div>
         <div class="flex-1 min-w-0 text-sm">
           <p id="target-preview-title" class="font-bold truncate"></p>
@@ -245,7 +539,7 @@
       <p id="compat-detail" class="text-red-400/80 text-sm mt-2"></p>
     </div>
 
-    <section id="policy-compact" class="rounded-lg border border-slate-600/80 bg-slate-800/40 px-3 py-2 space-y-2">
+    <section id="policy-compact" class="glass-card px-3 py-2 space-y-2">
       <details class="policy-fold text-[10px] text-slate-400">
         <summary class="font-bold text-slate-500 select-none">免責・利用条件の全文</summary>
         <div class="legal-scroll text-slate-400 space-y-1.5 leading-relaxed pr-1 mt-2">
@@ -257,42 +551,18 @@
           </ul>
         </div>
       </details>
-      <p id="policy-status" class="text-[10px] text-center text-amber-500/80 font-medium">運用確認 0 / 5</p>
-      <div class="rule-compact grid grid-cols-1 gap-1 text-[11px]">
-        <label class="flex items-center gap-2 cursor-pointer select-none py-0.5">
-          <input type="checkbox" id="rule-disclaimer" class="w-4 h-4 shrink-0 accent-amber-500" />
-          <span class="text-slate-300"><strong class="text-amber-400/90">①</strong> 免責に同意（参考値として使用）</span>
-        </label>
-        <label class="flex items-center gap-2 cursor-pointer select-none py-0.5">
-          <input type="checkbox" id="rule-de-policy" class="w-4 h-4 shrink-0 accent-amber-500" />
-          <span class="text-slate-300"><strong class="text-amber-400/90">②</strong> ΔE&gt;3は目安のみ・本番そのまま不可</span>
-        </label>
-        <label class="flex items-center gap-2 cursor-pointer select-none py-0.5">
-          <input type="checkbox" id="rule-testcoat" class="w-4 h-4 shrink-0 accent-amber-500" />
-          <span class="text-slate-300"><strong class="text-amber-400/90">③</strong> 同条件試し塗り（水性は乾燥24h後）</span>
-        </label>
-        <label class="flex items-center gap-2 cursor-pointer select-none py-0.5">
-          <input type="checkbox" id="rule-color-range" class="w-4 h-4 shrink-0 accent-amber-500" />
-          <span class="text-slate-300"><strong class="text-amber-400/90">④</strong> 初回は淡色〜中間色（L*35〜88）優先</span>
-        </label>
-        <label class="flex items-center gap-2 cursor-pointer select-none py-0.5">
-          <input type="checkbox" id="rule-catalog" class="w-4 h-4 shrink-0 accent-amber-500" />
-          <span class="text-slate-300"><strong class="text-amber-400/90">⑤</strong> 公式カタログ・調色メモと突合</span>
-        </label>
-        <label class="flex items-center gap-2 cursor-pointer select-none py-1 mt-1 border-t border-slate-600/50 pt-2">
-          <input type="checkbox" id="policy-remember-day" class="shrink-0 accent-emerald-500" />
-          <span class="text-slate-400 text-[10px]">②〜⑤を今日は省略（①免責は毎回必須）</span>
-        </label>
-      </div>
+      <p id="policy-status" class="text-[10px] text-center text-amber-500/80 font-medium">算出前に要確認</p>
+      <label class="flex items-start gap-3 cursor-pointer select-none py-1.5 min-h-[2.75rem]">
+        <input type="checkbox" id="rule-agree" class="mt-1 w-5 h-5 shrink-0 accent-amber-500" />
+        <span id="rule-agree-label" class="text-[11px] text-slate-200 leading-snug">
+          免責・運用条件に同意（参考値のみ・試し塗り必須・ΔE&gt;3は目安・カタログ突合・淡色〜中間色優先）
+        </span>
+      </label>
     </section>
 
-    <div id="extreme-color-alert" class="hidden rounded-lg border border-orange-600/60 bg-orange-950/50 px-3 py-2 space-y-1.5" role="alert">
-      <p class="text-orange-300 font-bold text-xs">④ 極濃・極浅 — 職人判断優先</p>
-      <p id="extreme-color-detail" class="text-[10px] text-orange-200/80 leading-snug"></p>
-      <label class="flex items-center gap-2 cursor-pointer select-none">
-        <input type="checkbox" id="rule-extreme-ack" class="w-4 h-4 shrink-0 accent-orange-500" />
-        <span class="text-[11px] font-bold text-orange-100">参考にとどめることを確認</span>
-      </label>
+    <div id="extreme-color-alert" class="hidden rounded-lg border border-orange-600/60 bg-orange-950/50 px-3 py-2" role="alert">
+      <p class="text-orange-300 font-bold text-xs">極濃・極浅が含まれます — 職人判断を優先</p>
+      <p id="extreme-color-detail" class="text-[10px] text-orange-200/80 leading-snug mt-1"></p>
     </div>
 
     <section id="result-panel" class="hidden space-y-3">
@@ -302,20 +572,17 @@
       <div id="de-guidance-only-banner" class="hidden rounded-lg border-2 border-red-500 bg-red-950/90 px-3 py-2 text-center text-red-300 text-xs font-bold">
         ΔE&gt;3 — 目安のみ（試し塗りで再調整）
       </div>
-      <div id="toner-results-wrap" class="bg-slate-800 border-2 border-amber-500/50 rounded-2xl p-4 relative">
-        <p class="text-slate-400 font-bold text-center mb-1 text-sm">参考配合トナー（0.01g単位）</p>
-        <p id="toner-results-caption" class="text-[10px] text-slate-500 text-center mb-3">理論値 · 試し塗りで必ず確認</p>
-        <div id="toner-guidance-overlay" class="hidden absolute inset-0 rounded-2xl bg-red-950/75 flex items-center justify-center pointer-events-none z-10">
-          <p class="text-red-200 font-black text-center text-base px-4">目安のみ<br><span class="text-xs font-bold">本番そのまま不可</span></p>
+      <div id="toner-results-wrap" class="result-hero-wrap glass-card rounded-2xl p-4">
+        <p class="text-slate-300 font-bold text-center mb-1 text-sm tracking-wide">参考配合トナー</p>
+        <p id="toner-results-caption" class="text-[10px] text-slate-500 text-center mb-3">0.01g単位 · 理論値 · 試し塗りで必ず確認</p>
+        <div id="de-guidance-inline" class="hidden mb-3 rounded-lg border border-red-500/70 bg-red-950/40 px-3 py-2 text-center" role="status">
+          <p class="text-red-300 text-xs font-bold leading-snug">目安のみ — 本番そのまま不可 · 試し塗りで再調整</p>
         </div>
         <div id="toner-results" class="space-y-3"></div>
       </div>
 
       <div id="affiliate-gear-wrap" class="hidden space-y-2">
-        <article
-          id="affiliate-gear-card"
-          class="bg-slate-800 border border-amber-500/30 rounded-xl p-4 shadow-lg"
-        >
+        <article id="affiliate-gear-card" class="affiliate-card-stylish rounded-xl p-4">
           <p class="text-slate-100 font-bold text-sm leading-relaxed mb-4">
             <span class="text-amber-400 font-black">【現場推奨】</span>0.01g単位で正確に調色・配合するための精密デジタルスケール（防塵・カバー付き）
           </p>
@@ -324,7 +591,7 @@
             href="https://www.amazon.co.jp/s?k=デジタルスケール+0.01g+防塵&amp;tag=irohack0d-22"
             target="_blank"
             rel="noopener noreferrer sponsored"
-            class="bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold py-4 px-6 rounded-lg text-center block w-full transition-colors text-base sm:text-lg"
+            class="btn-primary py-4 px-6 rounded-xl text-center block w-full text-base sm:text-lg"
           >Amazonで計量器を見る ➔</a>
         </article>
         <p id="result-theory-disclaimer" class="text-xs text-slate-400 leading-relaxed px-1">
@@ -333,11 +600,11 @@
       </div>
 
       <div class="grid grid-cols-2 gap-2 text-center text-sm">
-        <div class="bg-slate-800 rounded-xl p-2.5 border border-slate-700">
+        <div class="stat-pill p-2.5">
           <p class="text-slate-500 text-[10px] font-bold">予測 ΔE</p>
           <p id="result-de" class="text-2xl font-black text-emerald-400 font-mono">—</p>
         </div>
-        <div class="bg-slate-800 rounded-xl p-2.5 border border-slate-700">
+        <div class="stat-pill p-2.5">
           <p class="text-slate-500 text-[10px] font-bold">色差</p>
           <p id="result-delta" class="font-bold text-sky-400 text-[10px] font-mono leading-snug">—</p>
         </div>
@@ -345,7 +612,7 @@
       <div id="result-confidence" class="hidden text-center text-xs font-bold rounded-lg px-3 py-2 border"></div>
       <details class="policy-fold text-xs">
         <summary class="text-slate-500 font-bold select-none py-1">現場手順・注意（タップで展開）</summary>
-        <div id="result-field-tips" class="hidden bg-slate-800/80 border border-slate-600 rounded-xl p-3 text-xs text-slate-300 leading-relaxed mt-2"></div>
+        <div id="result-field-tips" class="hidden preview-card p-3 text-xs text-slate-300 leading-relaxed mt-2"></div>
         <p id="result-legal-reminder" class="hidden text-[10px] text-amber-500/80 mt-2 leading-relaxed"></p>
         <p id="result-catalog-reminder" class="hidden text-[10px] text-indigo-300/90 mt-1">⑤ 公式カタログ・調色メモと突合</p>
         <p id="result-detail" class="text-[10px] text-slate-400 font-mono leading-relaxed mt-2"></p>
@@ -360,19 +627,19 @@
       <p id="calc-blocker-hint" class="hidden text-center text-xs text-amber-400 font-bold mb-1.5 leading-snug"></p>
       <div class="flex gap-2">
         <button type="button" id="reset-btn"
-          class="shrink-0 px-4 py-4 rounded-xl font-bold text-sm bg-slate-700 border-2 border-slate-500 text-slate-200 hover:bg-slate-600 hover:border-slate-400 active:scale-[0.98] transition-colors"
+          class="btn-ghost shrink-0 px-4 py-4 rounded-xl font-bold text-sm"
           title="入力・選択を初期状態に戻す">
           リセット
         </button>
         <button type="button" id="calc-btn" disabled
-          class="flex-1 min-w-0 py-4 rounded-xl font-black text-lg bg-amber-500 text-slate-900 disabled:bg-slate-700 disabled:text-slate-500 active:scale-[0.98]">
+          class="btn-primary flex-1 min-w-0 py-4 rounded-xl text-lg">
           参考配合比を算出
         </button>
       </div>
     </div>
   </div>
 
-  <footer class="fixed bottom-0 inset-x-0 bg-slate-950 border-t border-slate-800 py-1.5 text-center text-[10px] text-slate-600 z-30">
+  <footer class="fixed bottom-0 inset-x-0 app-header py-1.5 text-center text-[10px] text-slate-500 z-30">
     <span id="db-stats">IRO-HACK v2</span>
   </footer>
 
@@ -1290,18 +1557,11 @@
     },
 
     allRulesChecked() {
-      return (
-        $('rule-disclaimer').checked
-        && $('rule-de-policy').checked
-        && $('rule-testcoat').checked
-        && $('rule-color-range').checked
-        && $('rule-catalog').checked
-      );
+      return !!$('rule-agree')?.checked;
     },
 
-    extremeAckedIfNeeded(ctx) {
-      if (!ctx.hasExtreme) return true;
-      return $('rule-extreme-ack').checked;
+    extremeAckedIfNeeded() {
+      return this.allRulesChecked();
     },
 
     applyResultPolicy(result, ctx) {
@@ -1318,11 +1578,7 @@
     calcBlockerMessage(current, target) {
       if (!current || !target) return '現状・目標の色番まで選択してください';
       if (isIncompatible(current, target)) return '水性と溶剤は混合できません';
-      if (!this.allRulesChecked()) return '運用則①〜⑤のチェックをすべて入れてください';
-      const ctx = this.analyzeSelection(current, target);
-      if (ctx.hasExtreme && !$('rule-extreme-ack').checked) {
-        return '極濃・極浅色：職人判断の確認にチェックを入れてください';
-      }
+      if (!this.allRulesChecked()) return '利用条件への同意が必要です';
       return '';
     },
   };
@@ -1332,8 +1588,11 @@
   // ═══════════════════════════════════════════════════════════════
   const $ = (id) => document.getElementById(id);
   const state = { current: null, target: null };
-  const POLICY_STORAGE_KEY = 'irohack-policy-date';
-  const RULE_IDS_2_5 = ['rule-de-policy', 'rule-testcoat', 'rule-color-range', 'rule-catalog'];
+  const POLICY_STORAGE_KEY = 'irohack-agreed-date';
+  const RULE_AGREE_LABEL_DEFAULT =
+    '免責・運用条件に同意（参考値のみ・試し塗り必須・ΔE>3は目安・カタログ突合・淡色〜中間色優先）';
+  const RULE_AGREE_LABEL_EXTREME =
+    '上記に加え、極濃・極浅色は職人判断を優先し参考値として使うことに同意';
 
   function todayISO() {
     return new Date().toISOString().slice(0, 10);
@@ -1360,18 +1619,25 @@
   }
 
   function applyPolicyRememberFromStorage() {
-    if (localStorage.getItem(POLICY_STORAGE_KEY) !== todayISO()) return;
-    RULE_IDS_2_5.forEach((id) => { $(id).checked = true; });
-    $('policy-remember-day').checked = true;
+    if (localStorage.getItem(POLICY_STORAGE_KEY) === todayISO()) {
+      $('rule-agree').checked = true;
+    }
   }
 
-  function syncPolicyRememberStorage() {
-    if ($('policy-remember-day').checked) {
-      RULE_IDS_2_5.forEach((id) => { $(id).checked = true; });
+  function syncPolicyAgreeStorage() {
+    if ($('rule-agree').checked) {
       localStorage.setItem(POLICY_STORAGE_KEY, todayISO());
     } else {
       localStorage.removeItem(POLICY_STORAGE_KEY);
     }
+  }
+
+  function updatePolicyAgreeLabel(ctx) {
+    const label = $('rule-agree-label');
+    if (!label) return;
+    label.textContent = ctx?.hasExtreme
+      ? RULE_AGREE_LABEL_EXTREME
+      : RULE_AGREE_LABEL_DEFAULT;
   }
 
   function applyMfrToPicker(prefix, mfrId) {
@@ -1440,17 +1706,7 @@
       if (!p.color.value) return '③目標：色番を検索して選択';
     }
     if (isIncompatible(current, target)) return '水性と溶剤は混合できません';
-    if (!$('rule-disclaimer').checked) return '①免責への同意が必要です';
-    if (!FieldPolicy.allRulesChecked()) {
-      if (localStorage.getItem(POLICY_STORAGE_KEY) === todayISO() && !$('policy-remember-day').checked) {
-        return '②〜⑤の確認、または「今日は省略」にチェック';
-      }
-      return '運用確認のチェックを完了してください';
-    }
-    const ctx = FieldPolicy.analyzeSelection(current, target);
-    if (ctx.hasExtreme && !$('rule-extreme-ack').checked) {
-      return '極色：職人判断の確認にチェック';
-    }
+    if (!FieldPolicy.allRulesChecked()) return '利用条件にチェックを入れてください';
     return '';
   }
 
@@ -1815,18 +2071,12 @@
   }
 
   function updatePolicyStatus() {
-    const ids = ['rule-disclaimer', ...RULE_IDS_2_5];
-    const n = ids.filter((id) => $(id).checked).length;
     const el = $('policy-status');
-    const skipped = localStorage.getItem(POLICY_STORAGE_KEY) === todayISO();
-    if (n === 5) {
-      el.textContent = skipped ? '運用確認 完了（②〜⑤は今日省略）' : '運用確認 完了 ✓';
+    if ($('rule-agree').checked) {
+      el.textContent = '確認済み ✓';
       el.className = 'text-[10px] text-center text-emerald-400 font-bold';
-    } else if ($('rule-disclaimer').checked && skipped) {
-      el.textContent = '①完了 · ②〜⑤は今日省略中';
-      el.className = 'text-[10px] text-center text-emerald-400/80 font-medium';
     } else {
-      el.textContent = `運用確認 ${n} / 5`;
+      el.textContent = '算出前に要確認';
       el.className = 'text-[10px] text-center text-amber-500/80 font-medium';
     }
   }
@@ -1890,8 +2140,8 @@
         + ' — 推奨範囲は L*35〜88（淡色〜中間色）です。';
     } else {
       extremeEl.classList.add('hidden');
-      $('rule-extreme-ack').checked = false;
     }
+    updatePolicyAgreeLabel(ctx);
 
     const mass = parseFloat($('mass-input').value);
     const massOk = Number.isFinite(mass) && mass > 0;
@@ -1936,13 +2186,8 @@
   wirePicker('current', 'current');
   wirePicker('target', 'target');
   $('mass-input').addEventListener('input', updateUI);
-  [
-    'rule-disclaimer',
-    ...RULE_IDS_2_5,
-    'rule-extreme-ack',
-  ].forEach((id) => $(id).addEventListener('change', updateUI));
-  $('policy-remember-day').addEventListener('change', () => {
-    syncPolicyRememberStorage();
+  $('rule-agree').addEventListener('change', () => {
+    syncPolicyAgreeStorage();
     updateUI();
   });
   $('copy-product-btn').addEventListener('click', copyCurrentProductToTarget);
@@ -1980,8 +2225,8 @@
       const g = toners[key];
       if (g < 0.005) return '';
       return `
-        <div class="rounded-2xl border-2 px-4 py-4 ${wrap}">
-          <p class="text-lg sm:text-xl font-black text-slate-200 mb-2">${label}トナーを足す</p>
+        <div class="toner-result-card border-2 ${wrap}">
+          <p class="text-base sm:text-lg font-bold text-slate-200 mb-2">${label}トナーを足す</p>
           <div class="flex flex-wrap items-baseline justify-end gap-x-2 gap-y-0">
             <span class="toner-gram-hero font-black font-mono ${gram}">${g.toFixed(2)}</span>
             <span class="toner-unit-hero font-black ${gram}">g</span>
@@ -2012,13 +2257,8 @@
     resetPicker('current');
     resetPicker('target');
     $('mass-input').value = '500';
-    $('rule-disclaimer').checked = false;
-    $('rule-extreme-ack').checked = false;
-    if (!$('policy-remember-day').checked) {
-      RULE_IDS_2_5.forEach((id) => { $(id).checked = false; });
-    } else {
-      applyPolicyRememberFromStorage();
-    }
+    $('rule-agree').checked = false;
+    localStorage.removeItem(POLICY_STORAGE_KEY);
     $('compat-warning').classList.add('hidden');
     $('extreme-color-alert').classList.add('hidden');
     $('result-panel').classList.add('hidden');
@@ -2054,16 +2294,19 @@
     }
 
     const guidanceBanner = $('de-guidance-only-banner');
-    const guidanceOverlay = $('toner-guidance-overlay');
+    const guidanceInline = $('de-guidance-inline');
+    const resultsWrap = $('toner-results-wrap');
     if (policy.guidanceOnly || r.confidence.guidanceOnly) {
       guidanceBanner.classList.remove('hidden');
-      guidanceOverlay.classList.remove('hidden');
+      guidanceInline.classList.remove('hidden');
+      resultsWrap.classList.add('ring-2', 'ring-red-500/50');
       $('toner-results-caption').textContent = '【運用則②】目安のみ — 試し塗りで再調整必須';
       $('toner-results-caption').className = 'text-[10px] text-red-400 text-center mb-3 font-bold';
     } else {
       guidanceBanner.classList.add('hidden');
-      guidanceOverlay.classList.add('hidden');
-      $('toner-results-caption').textContent = '理論値 · 試し塗りで必ず確認';
+      guidanceInline.classList.add('hidden');
+      resultsWrap.classList.remove('ring-2', 'ring-red-500/50');
+      $('toner-results-caption').textContent = '0.01g単位 · 理論値 · 試し塗りで必ず確認';
       $('toner-results-caption').className = 'text-[10px] text-slate-500 text-center mb-3';
     }
 
@@ -2115,13 +2358,38 @@
 
     $('affiliate-gear-wrap').classList.remove('hidden');
     $('result-panel').classList.remove('hidden');
-    $('result-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    $('toner-results-wrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
 
   $('reset-btn').addEventListener('click', resetApp);
 
   $('db-stats').textContent =
-    `IRO-HACK v3.7 · 色 ${ColorDatabase.totalColors.toLocaleString()}`;
+    `IRO-HACK v3.10 · 色 ${ColorDatabase.totalColors.toLocaleString()}`;
+
+  const THEME_STORAGE_KEY = 'irohack-theme';
+
+  function getTheme() {
+    return document.documentElement.dataset.theme === 'light' ? 'light' : 'dark';
+  }
+
+  function syncThemeSwitchUI() {
+    const theme = getTheme();
+    document.querySelectorAll('.theme-switch-btn').forEach((btn) => {
+      btn.setAttribute('aria-pressed', btn.dataset.themeSet === theme ? 'true' : 'false');
+    });
+  }
+
+  function setTheme(theme) {
+    const next = theme === 'light' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = next;
+    localStorage.setItem(THEME_STORAGE_KEY, next);
+    syncThemeSwitchUI();
+  }
+
+  document.querySelectorAll('.theme-switch-btn').forEach((btn) => {
+    btn.addEventListener('click', () => setTheme(btn.dataset.themeSet));
+  });
+  syncThemeSwitchUI();
 
   initMfrQuickPick();
   applyPolicyRememberFromStorage();
