@@ -152,6 +152,20 @@
     .flow-step { padding: 0.15rem 0.45rem; border-radius: 0.35rem; color: #64748b; }
     .flow-step.done { color: #34d399; background: rgba(52, 211, 153, 0.1); }
     .flow-step.active { color: #fbbf24; background: rgba(251, 191, 36, 0.12); }
+    .toner-gram-hero { font-size: clamp(2.75rem, 10vw, 3.75rem); line-height: 1; letter-spacing: -0.02em; }
+    .toner-unit-hero { font-size: clamp(1.5rem, 5vw, 2rem); line-height: 1; }
+    .affiliate-card {
+      background: linear-gradient(145deg, rgba(30, 41, 59, 0.95), rgba(120, 53, 15, 0.15));
+      border: 2px solid rgba(251, 191, 36, 0.35);
+    }
+    .affiliate-amazon-btn {
+      transition: background-color 0.2s, transform 0.15s, box-shadow 0.2s;
+    }
+    .affiliate-amazon-btn:hover {
+      background-color: #fbbf24;
+      box-shadow: 0 4px 20px rgba(251, 191, 36, 0.35);
+    }
+    .affiliate-amazon-btn:active { transform: scale(0.98); }
     @media (max-width: 640px) {
       .text-mega { font-size: 2.5rem; }
     }
@@ -306,8 +320,27 @@
         <div id="toner-guidance-overlay" class="hidden absolute inset-0 rounded-2xl bg-red-950/75 flex items-center justify-center pointer-events-none z-10">
           <p class="text-red-200 font-black text-center text-base px-4">目安のみ<br><span class="text-xs font-bold">本番そのまま不可</span></p>
         </div>
-        <div id="toner-results" class="space-y-2"></div>
+        <div id="toner-results" class="space-y-3"></div>
       </div>
+
+      <div id="affiliate-gear-wrap" class="hidden space-y-3">
+        <article id="affiliate-gear-card" class="affiliate-card rounded-2xl p-4 shadow-lg">
+          <p class="text-amber-400 text-xs font-black tracking-wide mb-2">【現場推奨】</p>
+          <p class="text-slate-100 font-bold text-sm leading-relaxed mb-4">
+            0.01g単位で正確に調色するための防塵・防水デジタルスケール
+          </p>
+          <a
+            href="#"
+            class="affiliate-amazon-btn block w-full text-center py-3.5 rounded-xl font-black text-base bg-amber-600 text-slate-900"
+            rel="nofollow sponsored"
+            onclick="return false;"
+          >Amazonで詳細を見る</a>
+        </article>
+        <p id="result-theory-disclaimer" class="text-xs text-slate-400 leading-relaxed px-1">
+          ※本アプリの計算結果はクベルカ・ムンク理論に基づく論理値です。塗料のロットや現場の乾燥環境、下地の色によって差異が生じるため、必ず少量での試し塗りと現場での微調整を行ってください。
+        </p>
+      </div>
+
       <div class="grid grid-cols-2 gap-2 text-center text-sm">
         <div class="bg-slate-800 rounded-xl p-2.5 border border-slate-700">
           <p class="text-slate-500 text-[10px] font-bold">予測 ΔE</p>
@@ -334,10 +367,17 @@
   <div id="calc-sticky" aria-live="polite">
     <div id="calc-sticky-inner">
       <p id="calc-blocker-hint" class="hidden text-center text-xs text-amber-400 font-bold mb-1.5 leading-snug"></p>
-      <button type="button" id="calc-btn" disabled
-        class="w-full py-4 rounded-xl font-black text-lg bg-amber-500 text-slate-900 disabled:bg-slate-700 disabled:text-slate-500 active:scale-[0.98]">
-        参考配合比を算出
-      </button>
+      <div class="flex gap-2">
+        <button type="button" id="reset-btn"
+          class="shrink-0 px-4 py-4 rounded-xl font-bold text-sm bg-slate-700 border-2 border-slate-500 text-slate-200 hover:bg-slate-600 hover:border-slate-400 active:scale-[0.98] transition-colors"
+          title="入力・選択を初期状態に戻す">
+          リセット
+        </button>
+        <button type="button" id="calc-btn" disabled
+          class="flex-1 min-w-0 py-4 rounded-xl font-black text-lg bg-amber-500 text-slate-900 disabled:bg-slate-700 disabled:text-slate-500 active:scale-[0.98]">
+          参考配合比を算出
+        </button>
+      </div>
     </div>
   </div>
 
@@ -1877,7 +1917,10 @@
     } else {
       hintEl.classList.add('hidden');
     }
-    if (!canCalc) $('result-panel').classList.add('hidden');
+    if (!canCalc) {
+      $('result-panel').classList.add('hidden');
+      $('affiliate-gear-wrap').classList.add('hidden');
+    }
     updatePolicyStatus();
     updateFlowProgress();
     updateMfrChipHighlight();
@@ -1914,26 +1957,84 @@
   $('copy-product-btn').addEventListener('click', copyCurrentProductToTarget);
 
   const TONER_UI = [
-    { key: 'black', label: '黒', color: 'bg-slate-950 border-slate-600 text-slate-100' },
-    { key: 'yellow', label: '黄', color: 'bg-yellow-500/20 border-yellow-500 text-yellow-300' },
-    { key: 'red', label: '赤', color: 'bg-red-500/20 border-red-500 text-red-300' },
-    { key: 'blue', label: '青', color: 'bg-blue-500/20 border-blue-500 text-blue-300' },
+    {
+      key: 'black',
+      label: '黒',
+      wrap: 'bg-slate-950/80 border-slate-500',
+      gram: 'text-emerald-400',
+    },
+    {
+      key: 'yellow',
+      label: '黄',
+      wrap: 'bg-yellow-500/10 border-yellow-500/70',
+      gram: 'text-yellow-300',
+    },
+    {
+      key: 'red',
+      label: '赤',
+      wrap: 'bg-red-500/10 border-red-500/70',
+      gram: 'text-red-400',
+    },
+    {
+      key: 'blue',
+      label: '青',
+      wrap: 'bg-blue-500/10 border-blue-500/70',
+      gram: 'text-sky-400',
+    },
   ];
 
   function renderTonerResults(toners) {
     const el = $('toner-results');
-    const rows = TONER_UI.map(({ key, label, color }) => {
+    const rows = TONER_UI.map(({ key, label, wrap, gram }) => {
       const g = toners[key];
       if (g < 0.005) return '';
       return `
-        <div class="flex items-center justify-between rounded-xl border-2 px-4 py-3 ${color}">
-          <span class="text-xl font-black">${label}</span>
-          <span class="text-2xl font-black font-mono">${g.toFixed(2)}<span class="text-lg ml-1">g</span></span>
+        <div class="rounded-2xl border-2 px-4 py-4 ${wrap}">
+          <p class="text-lg sm:text-xl font-black text-slate-200 mb-2">${label}トナーを足す</p>
+          <div class="flex flex-wrap items-baseline justify-end gap-x-2 gap-y-0">
+            <span class="toner-gram-hero font-black font-mono ${gram}">${g.toFixed(2)}</span>
+            <span class="toner-unit-hero font-black ${gram}">g</span>
+            <span class="text-sm font-bold text-slate-500 w-full text-right sm:w-auto">（グラム）</span>
+          </div>
         </div>`;
     }).filter(Boolean);
     el.innerHTML = rows.length
       ? rows.join('')
-      : '<p class="text-center text-slate-400 py-2 text-sm">追加トナー不要（色差が極小）</p>';
+      : '<p class="text-center text-slate-400 py-4 text-sm">追加トナー不要（色差が極小）</p>';
+  }
+
+  function resetPicker(prefix) {
+    const p = pickers[prefix];
+    const stateKey = prefix === 'current' ? 'current' : 'target';
+    p.mfr.value = '';
+    resetDown(p, 'type');
+    p.type.innerHTML = '<option value="">選択してください</option>';
+    p.type.disabled = true;
+    p.search.value = '';
+    p.colorSearch.value = '';
+    updateColorChip(prefix, null);
+    $(`${prefix}-preview`).classList.add('hidden');
+    state[stateKey] = null;
+  }
+
+  function resetApp() {
+    resetPicker('current');
+    resetPicker('target');
+    $('mass-input').value = '500';
+    $('rule-disclaimer').checked = false;
+    $('rule-extreme-ack').checked = false;
+    if (!$('policy-remember-day').checked) {
+      RULE_IDS_2_5.forEach((id) => { $(id).checked = false; });
+    } else {
+      applyPolicyRememberFromStorage();
+    }
+    $('compat-warning').classList.add('hidden');
+    $('extreme-color-alert').classList.add('hidden');
+    $('result-panel').classList.add('hidden');
+    $('affiliate-gear-wrap').classList.add('hidden');
+    $('toner-results').innerHTML = '';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    updateUI();
   }
 
   const FIELD_WORKFLOW = [
@@ -2021,12 +2122,15 @@
       .filter(Boolean)
       .join('<br>');
 
+    $('affiliate-gear-wrap').classList.remove('hidden');
     $('result-panel').classList.remove('hidden');
     $('result-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
 
+  $('reset-btn').addEventListener('click', resetApp);
+
   $('db-stats').textContent =
-    `IRO-HACK v3.5 · 色 ${ColorDatabase.totalColors.toLocaleString()}`;
+    `IRO-HACK v3.6 · 色 ${ColorDatabase.totalColors.toLocaleString()}`;
 
   initMfrQuickPick();
   applyPolicyRememberFromStorage();
