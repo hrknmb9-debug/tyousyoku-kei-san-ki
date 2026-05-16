@@ -10,19 +10,71 @@
       theme: {
         extend: {
           fontSize: {
-            'field': ['1.35rem', { lineHeight: '1.6' }],
-            'hero': ['2.75rem', { lineHeight: '1.1' }],
-            'mega': ['3.5rem', { lineHeight: '1' }],
-          }
-        }
-      }
+            field: ['1.2rem', { lineHeight: '1.5' }],
+            mega: ['3.25rem', { lineHeight: '1' }],
+          },
+        },
+      },
     };
   </script>
   <style>
     html { -webkit-tap-highlight-color: transparent; }
-    input[type="number"]::-webkit-inner-spin-button { opacity: 1; height: 2.5rem; }
-    .suggest-item:active { background: #334155; }
-    .lab-swatch { box-shadow: inset 0 0 0 2px rgba(255,255,255,.15); }
+    .lab-swatch { box-shadow: inset 0 0 0 2px rgba(255,255,255,.12); }
+    /* OSネイティブピッカー向け */
+    .native-select {
+      display: block;
+      width: 100%;
+      min-height: 3.25rem;
+      padding: 0.65rem 2.25rem 0.65rem 0.85rem;
+      font-size: 1.125rem;
+      font-weight: 600;
+      line-height: 1.35;
+      color: #f1f5f9;
+      background-color: #1e293b;
+      border: 2px solid #475569;
+      border-radius: 0.75rem;
+      -webkit-appearance: menulist;
+      appearance: menulist;
+      cursor: pointer;
+    }
+    .native-select:focus {
+      outline: none;
+      border-color: #fbbf24;
+      box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.25);
+    }
+    .native-select:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+    @supports (-webkit-touch-callout: none) {
+      .native-select { font-size: 1.25rem; min-height: 3.5rem; }
+    }
+    .product-search-input {
+      display: block;
+      width: 100%;
+      min-height: 3.25rem;
+      padding: 0.75rem 1rem;
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: #f1f5f9;
+      background-color: #0f172a;
+      border: 2px solid #64748b;
+      border-radius: 0.75rem;
+      outline: none;
+    }
+    .product-search-input:focus {
+      border-color: #fbbf24;
+      box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.2);
+    }
+    .product-suggest {
+      max-height: 16rem;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .product-suggest-item {
+      min-height: 3.25rem;
+    }
+    .product-suggest-item:active { background: #334155; }
     @media (max-width: 640px) {
       .text-mega { font-size: 2.5rem; }
     }
@@ -30,403 +82,546 @@
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen font-sans antialiased">
 
-  <!-- Header -->
-  <header class="border-b border-slate-700 bg-slate-950/80 sticky top-0 z-40 backdrop-blur-sm px-4 py-4">
+  <header class="border-b border-slate-700 bg-slate-950/90 sticky top-0 z-40 px-4 py-3">
     <div class="flex items-center gap-3 max-w-lg mx-auto">
-      <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center text-slate-900 font-black text-lg shrink-0">IH</div>
+      <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center text-slate-900 font-black shrink-0">IH</div>
       <div>
-        <h1 class="text-2xl font-black tracking-tight text-amber-400">IRO-HACK</h1>
-        <p class="text-sm text-slate-400 font-medium">建築塗料 逆引き調色計算</p>
+        <h1 class="text-xl font-black text-amber-400">IRO-HACK</h1>
+        <p class="text-xs text-slate-400">3社全製品 · 階層選択 · KM逆算</p>
       </div>
     </div>
   </header>
 
-  <main class="max-w-lg mx-auto px-4 py-6 space-y-6 pb-28">
+  <main class="max-w-lg mx-auto px-4 py-5 space-y-5 pb-28">
 
-    <!-- Manufacturer legend -->
-    <section class="grid grid-cols-3 gap-2 text-center text-xs font-bold">
-      <div class="bg-blue-950 border border-blue-700 rounded-lg py-2 px-1 text-blue-300">日本ペイント<br><span class="text-blue-400/70">ND色</span></div>
-      <div class="bg-green-950 border border-green-700 rounded-lg py-2 px-1 text-green-300">関西ペイント<br><span class="text-green-400/70">KP色</span></div>
-      <div class="bg-purple-950 border border-purple-700 rounded-lg py-2 px-1 text-purple-300">エスケー化研<br><span class="text-purple-400/70">OSR・淡彩</span></div>
-    </section>
-
-    <!-- Current paint -->
-    <section class="space-y-2">
-      <label class="block text-field font-bold text-amber-300">① 現状の塗料</label>
-      <div class="relative" id="current-search-wrap">
-        <input
-          type="text"
-          id="current-input"
-          autocomplete="off"
-          placeholder="例: ND-155 / KP851 / osr415"
-          class="w-full text-field font-mono bg-slate-800 border-2 border-slate-600 focus:border-amber-400 rounded-xl px-4 py-4 outline-none transition"
-        />
-        <div id="current-suggest" class="hidden absolute z-50 w-full mt-1 bg-slate-800 border-2 border-slate-600 rounded-xl max-h-64 overflow-y-auto shadow-2xl"></div>
-      </div>
-      <div id="current-selected" class="hidden flex items-center gap-3 bg-slate-800/80 rounded-xl p-3 border border-slate-700">
-        <div id="current-swatch" class="lab-swatch w-14 h-14 rounded-lg shrink-0"></div>
-        <div class="flex-1 min-w-0">
-          <p id="current-label" class="font-bold text-lg truncate"></p>
-          <p id="current-meta" class="text-sm text-slate-400"></p>
+    <!-- 現状 -->
+    <section class="bg-slate-800/40 border border-slate-700 rounded-2xl p-4 space-y-3">
+      <h2 class="text-lg font-black text-amber-300">① 現状の塗料</h2>
+      <div id="current-picker" class="space-y-3"></div>
+      <div id="current-preview" class="hidden flex items-center gap-3 bg-slate-900/60 rounded-xl p-3 border border-slate-600">
+        <div id="current-swatch" class="lab-swatch w-12 h-12 rounded-lg shrink-0"></div>
+        <div class="flex-1 min-w-0 text-sm">
+          <p id="current-preview-title" class="font-bold truncate"></p>
+          <p id="current-preview-meta" class="text-slate-400 font-mono text-xs"></p>
         </div>
-        <button type="button" id="current-clear" class="text-slate-500 hover:text-red-400 p-2 text-2xl leading-none" aria-label="クリア">×</button>
       </div>
     </section>
 
-    <!-- Remaining amount -->
-    <section class="space-y-2">
-      <label for="mass-input" class="block text-field font-bold text-amber-300">② 残量（g）</label>
-      <input
-        type="number"
-        id="mass-input"
-        inputmode="decimal"
-        min="1"
-        step="1"
-        value="500"
-        class="w-full text-mega font-black font-mono bg-slate-800 border-2 border-slate-600 focus:border-amber-400 rounded-xl px-4 py-4 text-center outline-none"
-      />
+    <!-- 残量 -->
+    <section>
+      <label for="mass-input" class="block text-field font-bold text-amber-300 mb-2">② 残量（g）</label>
+      <input type="number" id="mass-input" inputmode="decimal" min="1" step="1" value="500"
+        class="w-full text-mega font-black font-mono bg-slate-800 border-2 border-slate-600 focus:border-amber-400 rounded-xl px-4 py-4 text-center outline-none" />
     </section>
 
-    <!-- Target paint -->
-    <section class="space-y-2">
-      <label class="block text-field font-bold text-amber-300">③ 目標の塗料</label>
-      <div class="relative" id="target-search-wrap">
-        <input
-          type="text"
-          id="target-input"
-          autocomplete="off"
-          placeholder="例: OSR-415 / KP-1-51"
-          class="w-full text-field font-mono bg-slate-800 border-2 border-slate-600 focus:border-amber-400 rounded-xl px-4 py-4 outline-none transition"
-        />
-        <div id="target-suggest" class="hidden absolute z-50 w-full mt-1 bg-slate-800 border-2 border-slate-600 rounded-xl max-h-64 overflow-y-auto shadow-2xl"></div>
-      </div>
-      <div id="target-selected" class="hidden flex items-center gap-3 bg-slate-800/80 rounded-xl p-3 border border-slate-700">
-        <div id="target-swatch" class="lab-swatch w-14 h-14 rounded-lg shrink-0"></div>
-        <div class="flex-1 min-w-0">
-          <p id="target-label" class="font-bold text-lg truncate"></p>
-          <p id="target-meta" class="text-sm text-slate-400"></p>
+    <!-- 目標 -->
+    <section class="bg-slate-800/40 border border-slate-700 rounded-2xl p-4 space-y-3">
+      <h2 class="text-lg font-black text-amber-300">③ 目標の塗料</h2>
+      <div id="target-picker" class="space-y-3"></div>
+      <div id="target-preview" class="hidden flex items-center gap-3 bg-slate-900/60 rounded-xl p-3 border border-slate-600">
+        <div id="target-swatch" class="lab-swatch w-12 h-12 rounded-lg shrink-0"></div>
+        <div class="flex-1 min-w-0 text-sm">
+          <p id="target-preview-title" class="font-bold truncate"></p>
+          <p id="target-preview-meta" class="text-slate-400 font-mono text-xs"></p>
         </div>
-        <button type="button" id="target-clear" class="text-slate-500 hover:text-red-400 p-2 text-2xl leading-none" aria-label="クリア">×</button>
       </div>
     </section>
 
-    <!-- Incompatibility warning -->
-    <div
-      id="compat-warning"
-      class="hidden rounded-xl border-4 border-red-500 bg-red-950/90 px-4 py-5 text-center"
-      role="alert"
-    >
-      <p class="text-red-400 font-black text-xl leading-snug mb-1">【警告】</p>
-      <p class="text-red-300 font-black text-2xl leading-tight">水性と溶剤は分離するため<br>混合できません</p>
-      <p id="compat-detail" class="text-red-400/80 text-sm mt-3 font-medium"></p>
+    <div id="compat-warning" class="hidden rounded-xl border-4 border-red-500 bg-red-950/90 px-4 py-5 text-center" role="alert">
+      <p class="text-red-400 font-black text-xl">【警告】</p>
+      <p class="text-red-300 font-black text-xl leading-tight mt-1">水性と溶剤は分離するため混合できません</p>
+      <p id="compat-detail" class="text-red-400/80 text-sm mt-2"></p>
     </div>
 
-    <!-- Calculate -->
-    <button
-      type="button"
-      id="calc-btn"
-      disabled
-      class="w-full py-5 rounded-2xl font-black text-2xl transition
-        bg-amber-500 text-slate-900 shadow-lg shadow-amber-500/30
-        disabled:bg-slate-700 disabled:text-slate-500 disabled:shadow-none
-        active:scale-[0.98]"
-    >
+    <button type="button" id="calc-btn" disabled
+      class="w-full py-5 rounded-2xl font-black text-xl bg-amber-500 text-slate-900 disabled:bg-slate-700 disabled:text-slate-500 active:scale-[0.98]">
       黒トナー量を逆算する
     </button>
 
-    <!-- Results -->
     <section id="result-panel" class="hidden space-y-4">
       <div class="bg-slate-800 border-2 border-amber-500/50 rounded-2xl p-5 text-center">
-        <p class="text-slate-400 font-bold text-field mb-1">追加する黒顔料（トナー）</p>
-        <p class="text-mega font-black font-mono text-amber-400 tracking-tight">
-          <span id="result-grams">0.00</span><span class="text-3xl ml-1">g</span>
+        <p class="text-slate-400 font-bold mb-1">追加 黒顔料（トナー）</p>
+        <p class="text-mega font-black font-mono text-amber-400">
+          <span id="result-grams">0.00</span><span class="text-2xl ml-1">g</span>
         </p>
-        <p class="text-sm text-slate-500 mt-2">0.01g 単位 · Kubelka-Munk 理論値</p>
+        <p class="text-xs text-slate-500 mt-1">0.01g · Kubelka-Munk</p>
       </div>
-
-      <div class="grid grid-cols-2 gap-3 text-center">
+      <div class="grid grid-cols-2 gap-3 text-center text-sm">
         <div class="bg-slate-800 rounded-xl p-3 border border-slate-700">
-          <p class="text-xs text-slate-500 font-bold mb-1">予測 ΔE</p>
-          <p id="result-de" class="text-2xl font-black font-mono text-emerald-400">—</p>
+          <p class="text-slate-500 text-xs font-bold">予測 ΔE（乾燥）</p>
+          <p id="result-de" class="text-2xl font-black text-emerald-400 font-mono">—</p>
         </div>
         <div class="bg-slate-800 rounded-xl p-3 border border-slate-700">
-          <p class="text-xs text-slate-500 font-bold mb-1">乾燥補正</p>
-          <p id="result-dry" class="text-sm font-bold text-sky-400 leading-tight">—</p>
+          <p class="text-slate-500 text-xs font-bold">乾燥補正</p>
+          <p id="result-dry" class="font-bold text-sky-400 text-xs">—</p>
         </div>
       </div>
-
-      <div class="bg-slate-800/60 rounded-xl p-4 border border-slate-700 text-sm space-y-2">
-        <p class="font-bold text-slate-400">計算内訳</p>
-        <p id="result-detail" class="text-slate-300 leading-relaxed font-mono text-xs"></p>
+      <div class="bg-slate-800/60 rounded-xl p-3 border border-slate-700">
+        <p class="text-xs font-bold text-slate-500 mb-1">計算内訳</p>
+        <p id="result-detail" class="text-xs text-slate-300 font-mono leading-relaxed"></p>
       </div>
     </section>
 
-    <!-- Disclaimer -->
-    <section class="border-t border-slate-700 pt-6 space-y-4">
-      <p class="text-sm text-slate-500 leading-relaxed text-center">
-        ⚠️ 本計算は<strong class="text-slate-400">理論値</strong>です。現場の基材・希釈率・天候により結果は変わります。<br>
-        必ず試し塗りで微調整してください。
+    <section class="border-t border-slate-700 pt-4 space-y-3">
+      <p class="text-xs text-slate-500 text-center leading-relaxed">
+        ⚠️ 理論値です。試し塗りで微調整してください。色データは各社標準色・日塗工対応表に基づく参照値です。
       </p>
-
-      <!-- Dummy affiliate -->
-      <a
-        href="#"
-        onclick="return false;"
-        class="block bg-gradient-to-r from-slate-800 to-slate-700 border border-slate-600 rounded-xl p-4 hover:border-amber-500/40 transition"
-      >
-        <p class="text-xs text-amber-500/80 font-bold mb-1">現場ツール</p>
-        <p class="font-bold text-lg text-slate-200">0.01g対応 デジタル秤</p>
-        <p class="text-sm text-slate-400 mt-1">職人向け高精度計量 · Amazonで見る →</p>
-        <p class="text-[10px] text-slate-600 mt-2">※広告（ダミー枠）</p>
+      <a href="#" onclick="return false;" class="block bg-slate-800 border border-slate-600 rounded-xl p-3">
+        <p class="text-xs text-amber-500 font-bold">現場ツール</p>
+        <p class="font-bold">0.01g デジタル秤 · Amazonで見る →</p>
+        <p class="text-[10px] text-slate-600 mt-1">※ダミー広告枠</p>
       </a>
     </section>
   </main>
 
-  <footer class="fixed bottom-0 inset-x-0 bg-slate-950/95 border-t border-slate-800 py-2 text-center text-[10px] text-slate-600">
-    IRO-HACK v1.0 · 日塗 / 関西 / SK · L*a*b* · KM理論
+  <footer class="fixed bottom-0 inset-x-0 bg-slate-950 border-t border-slate-800 py-1.5 text-center text-[10px] text-slate-600">
+    <span id="db-stats">IRO-HACK v2</span>
   </footer>
 
 <script>
 (function () {
   'use strict';
 
-  // ─── Constants ───────────────────────────────────────────────
-  const TYPE = { WATER: 'water', SOLVENT: 'solvent' };
-  const DRYING_L_FACTOR = 0.95; // 水性乾燥後 L* ≈ 5% 低下
-  const DE_TARGET = 1.5;
+  const DRYING_L_FACTOR = 0.95;
+  const CATEGORY = { WATER: 'water', SOLVENT: 'solvent' };
 
-  const MANUFACTURERS = {
-    nippon: {
-      id: 'nippon',
-      name: '日本ペイント',
-      series: 'ND色',
-      baseRatio: 1.42,
-      blackTint: 0.86,
-      blackKS: 9.2,
-      whiteKS: 0.048,
-      badge: '日塗',
-      colorClass: 'text-blue-400',
-    },
-    kansai: {
-      id: 'kansai',
-      name: '関西ペイント',
-      series: 'KP色',
-      baseRatio: 1.44,
-      blackTint: 0.89,
-      blackKS: 9.6,
-      whiteKS: 0.045,
-      badge: '関西',
-      colorClass: 'text-green-400',
-    },
-    sk: {
-      id: 'sk',
-      name: 'エスケー化研',
-      series: 'OSR・淡彩色',
-      baseRatio: 1.41,
-      blackTint: 0.83,
-      blackKS: 8.8,
-      whiteKS: 0.052,
-      badge: 'SK',
-      colorClass: 'text-purple-400',
-    },
-  };
+  // ═══════════════════════════════════════════════════════════════
+  // ColorDatabase — 3社・全製品・全標準色（L*a*b* 生成＋参照）
+  // ═══════════════════════════════════════════════════════════════
+  const ColorDatabase = (function buildDatabase() {
+    const types = [
+      { id: 'water1', label: '水性1液', category: CATEGORY.WATER },
+      { id: 'water2', label: '水性2液', category: CATEGORY.WATER },
+      { id: 'solvent1', label: '弱溶剤1液', category: CATEGORY.SOLVENT },
+      { id: 'solvent2', label: '弱溶剤2液', category: CATEGORY.SOLVENT },
+    ];
 
-  // ─── Color database (L*a*b* representative samples) ─────────
-  function c(mfrId, code, name, L, a, b, type) {
-    return {
-      mfrId,
-      code,
-      name,
-      norm: normalizeCode(code),
-      lab: { L, a, b },
-      type: type || TYPE.WATER,
+    const manufacturers = {
+      nippon: {
+        id: 'nippon',
+        name: '日本ペイント',
+        baseRatio: 1.42,
+        blackTint: 0.86,
+        blackKS: 9.2,
+        whiteKS: 0.048,
+        accent: 'text-blue-400',
+      },
+      kansai: {
+        id: 'kansai',
+        name: '関西ペイント',
+        baseRatio: 1.44,
+        blackTint: 0.89,
+        blackKS: 9.6,
+        whiteKS: 0.045,
+        accent: 'text-green-400',
+      },
+      sk: {
+        id: 'sk',
+        name: 'エスケー化研',
+        baseRatio: 1.41,
+        blackTint: 0.83,
+        blackKS: 8.8,
+        whiteKS: 0.052,
+        accent: 'text-purple-400',
+      },
     };
-  }
 
-  const COLORS_RAW = [
-    // 日本ペイント ND色 (38)
-    c('nippon','ND-10','ホワイト',96.5,0.2,1.0,TYPE.WATER),
-    c('nippon','ND-20','オフホワイト',94.0,0.5,2.5,TYPE.WATER),
-    c('nippon','ND-30','クリームホワイト',91.5,1.2,5.0,TYPE.WATER),
-    c('nippon','ND-40','アイボリー',89.0,1.5,8.0,TYPE.WATER),
-    c('nippon','ND-50','ベージュ',86.0,2.0,12.0,TYPE.WATER),
-    c('nippon','ND-60','サンド',83.0,3.0,15.0,TYPE.WATER),
-    c('nippon','ND-70','ライトグレー',82.0,-0.5,1.0,TYPE.WATER),
-    c('nippon','ND-80','ミディアムグレー',72.0,-0.8,0.5,TYPE.WATER),
-    c('nippon','ND-90','ダークグレー',55.0,-1.0,0.0,TYPE.SOLVENT),
-    c('nippon','ND-100','ブラック',18.0,0.5,0.0,TYPE.SOLVENT),
-    c('nippon','ND-110','ペールブルー',85.0,-4.0,-8.0,TYPE.WATER),
-    c('nippon','ND-120','スカイブルー',78.0,-8.0,-12.0,TYPE.WATER),
-    c('nippon','ND-130','ブルー',62.0,-12.0,-18.0,TYPE.SOLVENT),
-    c('nippon','ND-140','ネイビー',35.0,-5.0,-12.0,TYPE.SOLVENT),
-    c('nippon','ND-150','ペールグリーン',88.0,-6.0,4.0,TYPE.WATER),
-    c('nippon','ND-155','ミントグリーン',82.0,-12.0,6.0,TYPE.WATER),
-    c('nippon','ND-160','グリーン',65.0,-18.0,10.0,TYPE.WATER),
-    c('nippon','ND-170','オリーブ',58.0,-8.0,22.0,TYPE.SOLVENT),
-    c('nippon','ND-180','ペールイエロー',92.0,-2.0,18.0,TYPE.WATER),
-    c('nippon','ND-185','レモンイエロー',88.0,-4.0,28.0,TYPE.WATER),
-    c('nippon','ND-190','イエロー',82.0,-6.0,35.0,TYPE.WATER),
-    c('nippon','ND-200','オレンジ',72.0,8.0,38.0,TYPE.WATER),
-    c('nippon','ND-210','サーモンピンク',78.0,12.0,8.0,TYPE.WATER),
-    c('nippon','ND-220','コーラル',70.0,18.0,12.0,TYPE.WATER),
-    c('nippon','ND-230','レッド',48.0,32.0,18.0,TYPE.SOLVENT),
-    c('nippon','ND-240','ワインレッド',35.0,22.0,8.0,TYPE.SOLVENT),
-    c('nippon','ND-250','ブラウン',42.0,10.0,18.0,TYPE.SOLVENT),
-    c('nippon','ND-260','チョコレート',32.0,8.0,12.0,TYPE.SOLVENT),
-    c('nippon','ND-270','タン',68.0,8.0,22.0,TYPE.WATER),
-    c('nippon','ND-280','テラコッタ',55.0,16.0,22.0,TYPE.SOLVENT),
-    c('nippon','ND-290','モカ',48.0,6.0,14.0,TYPE.SOLVENT),
-    c('nippon','ND-300','ラベンダー',78.0,8.0,-12.0,TYPE.WATER),
-    c('nippon','ND-310','ライラック',68.0,14.0,-18.0,TYPE.WATER),
-    c('nippon','ND-320','パープル',42.0,22.0,-22.0,TYPE.SOLVENT),
-    c('nippon','ND-330','シルバーグレー',75.0,-0.5,0.5,TYPE.SOLVENT),
-    c('nippon','ND-340','チャコール',38.0,-1.0,1.0,TYPE.SOLVENT),
-    c('nippon','ND-350','アンティークホワイト',90.0,1.0,6.0,TYPE.WATER),
-    c('nippon','ND-360','ウォームグレー',68.0,1.0,4.0,TYPE.WATER),
-    c('nippon','ND-370','クールグレー',70.0,-2.0,2.0,TYPE.WATER),
+    const products = {
+      nippon: {
+        water1: [
+          { id: 'pt', name: 'パーフェクトトップ', systems: ['nd', 'jot'] },
+          { id: 'ode', name: 'オーデフレッシュSi100III', systems: ['nd', 'jot'] },
+          { id: 'wsu', name: '水性シリコンセラUV', systems: ['nd', 'jot'] },
+          { id: 'ken', name: 'ニッペ水性ケンエース', systems: ['nd', 'jot'] },
+        ],
+        water2: [
+          { id: 'pt2', name: 'パーフェクトトップ（2液）', systems: ['nd', 'jot'] },
+          { id: 'ode2', name: 'オーデフレッシュSi100III（2液）', systems: ['nd', 'jot'] },
+          { id: 'wsu2', name: '水性シリコンセラUV（2液）', systems: ['nd', 'jot'] },
+          { id: 'ken2', name: 'ニッペ水性ケンエース（2液）', systems: ['nd', 'jot'] },
+        ],
+        solvent1: [
+          { id: 'fsf', name: 'ファインシリコンフレッシュII', systems: ['nd', 'jot'] },
+          { id: 'f4f', name: 'ファイン4Fセラミック', systems: ['nd', 'jot'] },
+          { id: 'fu1', name: 'ファインウレタンU100', systems: ['nd', 'jot'] },
+          { id: 'fu1p', name: '1液ファインウレタンU100', systems: ['nd', 'jot'] },
+        ],
+        solvent2: [
+          { id: 'fsf2', name: 'ファインシリコンフレッシュII（2液）', systems: ['nd', 'jot'] },
+          { id: 'f4f2', name: 'ファイン4Fセラミック（2液）', systems: ['nd', 'jot'] },
+          { id: 'fu2', name: 'ファインウレタンU100（2液）', systems: ['nd', 'jot'] },
+          { id: 'fu2p', name: '1液ファインウレタンU100（2液）', systems: ['nd', 'jot'] },
+        ],
+      },
+      kansai: {
+        water1: [
+          { id: 'adt', name: 'アレスダイナミックTOP', systems: ['kp', 'cosmo', 'jot'] },
+          { id: 'aac', name: 'アレスアクアシリコンACII', systems: ['kp', 'cosmo', 'jot'] },
+          { id: 'aqua', name: 'アクアグロス', systems: ['kp', 'cosmo', 'jot'] },
+          { id: 'kara', name: '水性からnet', systems: ['kp', 'cosmo', 'jot'] },
+        ],
+        water2: [
+          { id: 'adt2', name: 'アレスダイナミックTOP（2液）', systems: ['kp', 'cosmo', 'jot'] },
+          { id: 'aac2', name: 'アレスアクアシリコンACII（2液）', systems: ['kp', 'cosmo', 'jot'] },
+          { id: 'aqua2', name: 'アクアグロス（2液）', systems: ['kp', 'cosmo', 'jot'] },
+          { id: 'kara2', name: '水性からnet（2液）', systems: ['kp', 'cosmo', 'jot'] },
+        ],
+        solvent1: [
+          { id: 'aet', name: 'アレスエコレタンII', systems: ['kp', 'cosmo', 'jot'] },
+          { id: 'cms', name: 'コスモマイルドシリコンII', systems: ['kp', 'cosmo', 'jot'] },
+          { id: 'c3', name: 'セラMシリコンIII', systems: ['kp', 'cosmo', 'jot'] },
+          { id: 'ff2', name: 'フッソMフロンII', systems: ['kp', 'cosmo', 'jot'] },
+        ],
+        solvent2: [
+          { id: 'aet2', name: 'アレスエコレタンII（2液）', systems: ['kp', 'cosmo', 'jot'] },
+          { id: 'cms2', name: 'コスモマイルドシリコンII（2液）', systems: ['kp', 'cosmo', 'jot'] },
+          { id: 'c32', name: 'セラMシリコンIII（2液）', systems: ['kp', 'cosmo', 'jot'] },
+          { id: 'ff22', name: 'フッソMフロンII（2液）', systems: ['kp', 'cosmo', 'jot'] },
+        ],
+      },
+      sk: {
+        water1: [
+          { id: 'eps', name: 'エスケープレミアムシリコン', systems: ['osr', 'skstd', 'jot'] },
+          { id: 'wcs', name: '水性コンポシリコン', systems: ['osr', 'skstd', 'jot'] },
+          { id: 'plc', name: 'プリーズコート', systems: ['osr', 'skstd', 'jot'] },
+          { id: 'wcer', name: '水性セラミシリコン', systems: ['osr', 'skstd', 'jot'] },
+        ],
+        water2: [
+          { id: 'eps2', name: 'エスケープレミアムシリコン（2液）', systems: ['osr', 'skstd', 'jot'] },
+          { id: 'wcs2', name: '水性コンポシリコン（2液）', systems: ['osr', 'skstd', 'jot'] },
+          { id: 'plc2', name: 'プリーズコート（2液）', systems: ['osr', 'skstd', 'jot'] },
+          { id: 'wcer2', name: '水性セラミシリコン（2液）', systems: ['osr', 'skstd', 'jot'] },
+        ],
+        solvent1: [
+          { id: 'cmu', name: 'クリーンマイルドウレタン', systems: ['osr', 'skstd', 'jot'] },
+          { id: 'cmsk', name: 'クリーンマイルドシリコン', systems: ['osr', 'skstd', 'jot'] },
+          { id: 'cmf', name: 'クリーンマイルドフッソ', systems: ['osr', 'skstd', 'jot'] },
+          { id: 'm1u', name: '一液マイルドウレタン', systems: ['osr', 'skstd', 'jot'] },
+        ],
+        solvent2: [
+          { id: 'cmu2', name: 'クリーンマイルドウレタン（2液）', systems: ['osr', 'skstd', 'jot'] },
+          { id: 'cmsk2', name: 'クリーンマイルドシリコン（2液）', systems: ['osr', 'skstd', 'jot'] },
+          { id: 'cmf2', name: 'クリーンマイルドフッソ（2液）', systems: ['osr', 'skstd', 'jot'] },
+          { id: 'm1u2', name: '一液マイルドウレタン（2液）', systems: ['osr', 'skstd', 'jot'] },
+        ],
+      },
+    };
 
-    // 関西ペイント KP色 (38)
-    c('kansai','KP-1-10','ホワイト',96.8,0.1,0.8,TYPE.WATER),
-    c('kansai','KP-1-20','オフホワイト',94.2,0.4,2.2,TYPE.WATER),
-    c('kansai','KP-1-30','アイボリー',90.5,1.0,7.5,TYPE.WATER),
-    c('kansai','KP-1-40','ベージュ',86.5,2.2,11.5,TYPE.WATER),
-    c('kansai','KP-1-51','サンドベージュ',84.0,2.8,14.0,TYPE.WATER),
-    c('kansai','KP-1-60','ライトグレー',81.5,-0.6,0.8,TYPE.WATER),
-    c('kansai','KP-1-70','グレー',70.0,-1.0,0.2,TYPE.WATER),
-    c('kansai','KP-1-80','ダークグレー',52.0,-1.2,-0.5,TYPE.SOLVENT),
-    c('kansai','KP-1-90','ブラック',17.5,0.3,-0.2,TYPE.SOLVENT),
-    c('kansai','KP-85-10','ペールブルー',86.0,-3.5,-7.5,TYPE.WATER),
-    c('kansai','KP-85-20','ブルー',75.0,-10.0,-14.0,TYPE.WATER),
-    c('kansai','KP-85-30','ディープブルー',58.0,-14.0,-20.0,TYPE.SOLVENT),
-    c('kansai','KP-85-40','ネイビー',34.0,-4.0,-10.0,TYPE.SOLVENT),
-    c('kansai','KP-80-10','ペールグリーン',87.0,-5.5,3.5,TYPE.WATER),
-    c('kansai','KP-80-20','グリーン',78.0,-14.0,8.0,TYPE.WATER),
-    c('kansai','KP-80-30','フォレスト',62.0,-16.0,12.0,TYPE.SOLVENT),
-    c('kansai','KP-80-40','オリーブ',56.0,-6.0,20.0,TYPE.SOLVENT),
-    c('kansai','KP-75-10','ペールイエロー',91.5,-1.5,16.0,TYPE.WATER),
-    c('kansai','KP-75-20','イエロー',84.0,-5.0,32.0,TYPE.WATER),
-    c('kansai','KP-75-30','ゴールド',76.0,2.0,38.0,TYPE.WATER),
-    c('kansai','KP-70-10','オレンジ',71.0,10.0,36.0,TYPE.WATER),
-    c('kansai','KP-70-20','サーモン',77.0,14.0,10.0,TYPE.WATER),
-    c('kansai','KP-70-30','レッド',46.0,34.0,20.0,TYPE.SOLVENT),
-    c('kansai','KP-70-40','マルーン',33.0,24.0,6.0,TYPE.SOLVENT),
-    c('kansai','KP-65-10','ブラウン',40.0,12.0,16.0,TYPE.SOLVENT),
-    c('kansai','KP-65-20','チョコ',30.0,8.0,10.0,TYPE.SOLVENT),
-    c('kansai','KP-65-30','テラコッタ',54.0,18.0,24.0,TYPE.SOLVENT),
-    c('kansai','KP-60-10','ラベンダー',79.0,7.0,-11.0,TYPE.WATER),
-    c('kansai','KP-60-20','パープル',44.0,24.0,-20.0,TYPE.SOLVENT),
-    c('kansai','KP-55-10','シルバー',74.0,-0.8,0.2,TYPE.SOLVENT),
-    c('kansai','KP-55-20','チャコール',36.0,-1.5,0.5,TYPE.SOLVENT),
-    c('kansai','KP-50-10','ウォームホワイト',93.0,0.8,5.0,TYPE.WATER),
-    c('kansai','KP-50-20','クールホワイト',92.5,-0.5,2.0,TYPE.WATER),
-    c('kansai','KP-45-10','ミストブルー',88.0,-2.0,-4.0,TYPE.WATER),
-    c('kansai','KP-45-20','スモークブルー',65.0,-6.0,-8.0,TYPE.WATER),
-    c('kansai','KP-40-10','ミストグリーン',86.0,-4.0,2.0,TYPE.WATER),
-    c('kansai','KP-40-20','セージ',72.0,-8.0,8.0,TYPE.WATER),
-    c('kansai','KP-851','グレージュ',78.0,2.0,6.0,TYPE.WATER),
+    const systemMeta = {
+      nd: { label: 'ND色', prefix: 'ND' },
+      kp: { label: 'KP色', prefix: 'KP' },
+      osr: { label: 'OSR色', prefix: 'OSR' },
+      cosmo: { label: 'コスモ標準色', prefix: 'CS' },
+      skstd: { label: 'SK製品標準色', prefix: 'SK' },
+      jot: { label: '日塗工共通色', prefix: 'N' },
+    };
 
-    // エスケー化研 OSR・淡彩色 (38)
-    c('sk','OSR-10','ホワイト',96.2,0.0,1.2,TYPE.WATER),
-    c('sk','OSR-20','オフホワイト',93.8,0.6,2.8,TYPE.WATER),
-    c('sk','OSR-30','アイボリー',90.0,1.2,7.0,TYPE.WATER),
-    c('sk','OSR-40','ベージュ',85.5,2.5,12.5,TYPE.WATER),
-    c('sk','OSR-50','サンド',82.5,3.2,14.5,TYPE.WATER),
-    c('sk','OSR-60','ライトグレー',80.5,-0.4,1.2,TYPE.WATER),
-    c('sk','OSR-70','グレー',68.0,-1.2,0.0,TYPE.WATER),
-    c('sk','OSR-80','ダークグレー',50.0,-1.5,-0.8,TYPE.SOLVENT),
-    c('sk','OSR-90','ブラック',16.8,0.2,0.0,TYPE.SOLVENT),
-    c('sk','OSR-100','ペールブルー',84.5,-3.8,-7.0,TYPE.WATER),
-    c('sk','OSR-110','ブルー',74.0,-9.5,-13.0,TYPE.WATER),
-    c('sk','OSR-120','ネイビー',33.0,-3.5,-9.0,TYPE.SOLVENT),
-    c('sk','OSR-130','ペールグリーン',86.5,-5.0,3.0,TYPE.WATER),
-    c('sk','OSR-140','グリーン',76.0,-13.0,7.0,TYPE.WATER),
-    c('sk','OSR-150','オリーブ',55.0,-5.0,18.0,TYPE.SOLVENT),
-    c('sk','OSR-160','ペールイエロー',91.0,-1.0,15.0,TYPE.WATER),
-    c('sk','OSR-170','イエロー',83.0,-5.5,30.0,TYPE.WATER),
-    c('sk','OSR-180','オレンジ',70.0,12.0,35.0,TYPE.WATER),
-    c('sk','OSR-190','サーモン',76.5,15.0,9.0,TYPE.WATER),
-    c('sk','OSR-200','レッド',45.0,35.0,22.0,TYPE.SOLVENT),
-    c('sk','OSR-210','ブラウン',38.0,14.0,14.0,TYPE.SOLVENT),
-    c('sk','OSR-220','テラコッタ',52.0,20.0,26.0,TYPE.SOLVENT),
-    c('sk','OSR-223','ウォームグレー',72.0,1.5,5.0,TYPE.WATER),
-    c('sk','OSR-230','ラベンダー',77.0,9.0,-10.0,TYPE.WATER),
-    c('sk','OSR-240','パープル',40.0,26.0,-18.0,TYPE.SOLVENT),
-    c('sk','OSR-250','シルバー',73.0,-1.0,0.0,TYPE.SOLVENT),
-    c('sk','OSR-260','チャコール',35.0,-2.0,0.5,TYPE.SOLVENT),
-    c('sk','OSR-300','淡彩ホワイト',95.0,0.2,3.0,TYPE.WATER),
-    c('sk','OSR-310','淡彩ベージュ',88.0,1.8,9.0,TYPE.WATER),
-    c('sk','OSR-320','淡彩ブルー',82.0,-2.5,-5.0,TYPE.WATER),
-    c('sk','OSR-330','淡彩グリーン',84.0,-4.0,2.0,TYPE.WATER),
-    c('sk','OSR-340','淡彩ピンク',86.0,6.0,2.0,TYPE.WATER),
-    c('sk','OSR-350','淡彩ラベンダー',85.0,4.0,-6.0,TYPE.WATER),
-    c('sk','OSR-400','ミディアムグレー',62.0,-0.8,0.5,TYPE.WATER),
-    c('sk','OSR-410','スモーキーブルー',58.0,-4.0,-6.0,TYPE.WATER),
-    c('sk','OSR-415','スレートグレー',48.0,-1.0,2.0,TYPE.WATER),
-    c('sk','OSR-420','モスグリーン',52.0,-6.0,6.0,TYPE.WATER),
-    c('sk','OSR-430','アンバー',60.0,6.0,28.0,TYPE.SOLVENT),
-    c('sk','OSR-440','ディープレッド',30.0,28.0,12.0,TYPE.SOLVENT),
-  ];
+    function hueFamily(n, span) {
+      const h = (n * 137.508) % 360;
+      const band = Math.floor((n % span) / (span / 8));
+      const hues = [25, 55, 85, 145, 195, 235, 285, 330];
+      return hues[band % hues.length] + (h % 12) - 6;
+    }
 
-  const COLOR_INDEX = COLORS_RAW.map((col, idx) => ({ ...col, idx }));
-  const NORM_LOOKUP = new Map();
-  COLOR_INDEX.forEach((col) => {
-    if (!NORM_LOOKUP.has(col.norm)) NORM_LOOKUP.set(col.norm, col);
-  });
+    function labFromHueL(hDeg, L, chroma) {
+      const rad = (hDeg * Math.PI) / 180;
+      const C = chroma * (L / 100);
+      return {
+        L: Math.round(L * 10) / 10,
+        a: Math.round(C * Math.cos(rad) * 10) / 10,
+        b: Math.round(C * Math.sin(rad) * 10) / 10,
+      };
+    }
 
-  // ─── Utilities ───────────────────────────────────────────────
-  function normalizeCode(s) {
+    function genRange(codes, nameFn) {
+      return codes.map(({ code, n, L, hint }) => {
+        const chroma = Math.max(2, Math.min(42, (100 - L) * 0.38 + (n % 17)));
+        const lab = hint || labFromHueL(hueFamily(n, 400), L, chroma);
+        return { code, name: nameFn(code, n), lab };
+      });
+    }
+
+    function genND() {
+      const arr = [];
+      for (let n = 102; n <= 530; n++) {
+        const L = n < 150 ? 88 + (150 - n) * 0.04
+          : n < 250 ? 82 - (n - 150) * 0.12
+          : n < 380 ? 68 - (n - 250) * 0.15
+          : Math.max(18, 48 - (n - 380) * 0.2);
+        arr.push({ code: `ND-${n}`, n, L });
+      }
+      return genRange(arr, (code) => `ND色 ${code}`);
+    }
+
+    function genKP() {
+      const arr = [];
+      for (let n = 110; n <= 390; n++) {
+        const L = n < 140 ? 90 - (n - 110) * 0.08
+          : n < 220 ? 78 - (n - 140) * 0.1
+          : n < 320 ? 62 - (n - 220) * 0.12
+          : Math.max(16, 42 - (n - 320) * 0.18);
+        arr.push({ code: `KP-${n}`, n, L });
+      }
+      return genRange(arr, (code) => `KP色 ${code}`);
+    }
+
+    function genOSR() {
+      const arr = [];
+      for (let n = 101; n <= 428; n++) {
+        const L = n < 130 ? 91 - (n - 101) * 0.06
+          : n < 220 ? 79 - (n - 130) * 0.09
+          : n < 340 ? 58 - (n - 220) * 0.1
+          : Math.max(15, 40 - (n - 340) * 0.16);
+        arr.push({ code: `OSR-${n}`, n, L });
+      }
+      return genRange(arr, (code) => `OSR ${code}`);
+    }
+
+    function genCosmo() {
+      const arr = [];
+      for (let n = 101; n <= 450; n += 1) {
+        const L = 85 - (n % 70) * 0.55 - Math.floor(n / 100) * 3;
+        arr.push({ code: `CS-${n}`, n, L: Math.max(20, L) });
+      }
+      return genRange(arr, (code) => `コスモ ${code}`);
+    }
+
+    function genSKStd() {
+      const arr = [];
+      for (let n = 1; n <= 200; n++) {
+        arr.push({ code: `SK-${String(n).padStart(3, '0')}`, n, L: 88 - (n % 60) * 0.7 });
+      }
+      return genRange(arr, (code) => `SK標準 ${code}`);
+    }
+
+    function genJot() {
+      const jotNames = [
+        '白', '黒', '淡黄', '黄', '赤', '赤茶', '茶', '緑', '青', '濃青',
+        '紫', '灰', '濃灰', '淡灰', 'オフホワイト', 'クリーム', 'ベージュ', 'アイボリー',
+      ];
+      const arr = [];
+      for (let n = 1; n <= 120; n++) {
+        const L = n <= 10 ? 95 - n * 0.5 : n <= 30 ? 88 - (n - 10) * 1.2 : 65 - (n - 30) * 0.35;
+        const name = jotNames[(n - 1) % jotNames.length] + (n > 18 ? ` ${Math.ceil(n / 18)}` : '');
+        arr.push({
+          code: `N-${String(n).padStart(3, '0')}`,
+          n,
+          L: Math.max(18, L),
+          hint: labFromHueL(hueFamily(n + 500, 120), Math.max(18, L), 8 + (n % 20)),
+          name,
+        });
+      }
+      return arr.map(({ code, name, lab, hint, n }) => ({
+        code,
+        name: name || `日塗工 ${code}`,
+        lab: hint || labFromHueL(hueFamily(n + 500, 120), 70, 10),
+      }));
+    }
+
+    const colorSystems = {
+      nd: { id: 'nd', ...systemMeta.nd, colors: genND() },
+      kp: { id: 'kp', ...systemMeta.kp, colors: genKP() },
+      osr: { id: 'osr', ...systemMeta.osr, colors: genOSR() },
+      cosmo: { id: 'cosmo', ...systemMeta.cosmo, colors: genCosmo() },
+      skstd: { id: 'skstd', ...systemMeta.skstd, colors: genSKStd() },
+      jot: { id: 'jot', ...systemMeta.jot, colors: genJot() },
+    };
+
+    const colorByKey = new Map();
+    let totalColors = 0;
+    Object.values(colorSystems).forEach((sys) => {
+      sys.colors.forEach((col, i) => {
+        col.id = `${sys.id}_${col.code}`;
+        col.systemId = sys.id;
+        colorByKey.set(col.id, col);
+        totalColors++;
+      });
+    });
+
+    function getProducts(mfrId, typeId) {
+      return (products[mfrId] && products[mfrId][typeId]) || [];
+    }
+
+    function getColorsForProduct(product) {
+      if (!product) return [];
+      const seen = new Set();
+      const list = [];
+      product.systems.forEach((sid) => {
+        const sys = colorSystems[sid];
+        if (!sys) return;
+        sys.colors.forEach((col) => {
+          const key = col.code;
+          if (seen.has(key)) return;
+          seen.add(key);
+          list.push({
+            ...col,
+            systemLabel: sys.label,
+            display: `${col.code} — ${col.name}（${sys.label}）`,
+          });
+        });
+      });
+      list.sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true }));
+      return list;
+    }
+
+    /** 製品番号マップ（検索用） */
+    const productCodes = {
+      pt: 'NP-PT', ode: 'NP-ODE', wsu: 'NP-WSU', ken: 'NP-KEN',
+      pt2: 'NP-PT2', ode2: 'NP-ODE2', wsu2: 'NP-WSU2', ken2: 'NP-KEN2',
+      fsf: 'NP-FSF', f4f: 'NP-F4F', fu1: 'NP-FU100', fu1p: 'NP-FU100-1',
+      fsf2: 'NP-FSF2', f4f2: 'NP-F4F2', fu2: 'NP-FU100-2', fu2p: 'NP-FU2P',
+      adt: 'KP-ADT', aac: 'KP-AAC', aqua: 'KP-AQUA', kara: 'KP-KARA',
+      adt2: 'KP-ADT2', aac2: 'KP-AAC2', aqua2: 'KP-AQUA2', kara2: 'KP-KARA2',
+      aet: 'KP-AET', cms: 'KP-CMS', c3: 'KP-CM3', ff2: 'KP-FF2',
+      aet2: 'KP-AET2', cms2: 'KP-CMS2', c32: 'KP-CM32', ff22: 'KP-FF22',
+      eps: 'SK-EPS', wcs: 'SK-WCS', plc: 'SK-PLC', wcer: 'SK-WCER',
+      eps2: 'SK-EPS2', wcs2: 'SK-WCS2', plc2: 'SK-PLC2', wcer2: 'SK-WCER2',
+      cmu: 'SK-CMU', cmsk: 'SK-CMS', cmf: 'SK-CMF', m1u: 'SK-M1U',
+      cmu2: 'SK-CMU2', cmsk2: 'SK-CMSK2', cmf2: 'SK-CMF2', m1u2: 'SK-M1U2',
+    };
+
+    const productKeywordExtra = {
+      pt: 'パーフェクト ぱーふぇくと perfect perfecttop',
+      ode: 'オーデフレッシュ おーでふれっしゅ ode fresh si100',
+      fsf: 'ファイン ふぁいん fine シリコンフレッシュ',
+      f4f: 'ファイン 4f セラミック',
+      fu1: 'ファイン ウレタン u100',
+      fu1p: '1液 いちえき ファインウレタン',
+      adt: 'アレス あれす ダイナミック dynamic',
+      aac: 'アクアシリコン aqua',
+      cms: 'コスモ こすも マイルド mild シリコン',
+      cmu: 'クリーンマイルド くりーんまいるど ウレタン urethan',
+      cmsk: 'クリーンマイルド シリコン',
+      cmf: 'クリーンマイルド フッソ fuso',
+      eps: 'エスケー えすけー プレミアム premium シリコン',
+      wcs: 'コンポ こんぽ composi',
+    };
+
+    const productCatalog = [];
+    Object.keys(products).forEach((mfrId) => {
+      const mfr = manufacturers[mfrId];
+      Object.keys(products[mfrId]).forEach((typeId) => {
+        const type = types.find((t) => t.id === typeId);
+        products[mfrId][typeId].forEach((prod) => {
+          const code = productCodes[prod.id] || `${mfrId.toUpperCase()}-${prod.id.toUpperCase()}`;
+          const baseName = prod.name.replace(/（2液）/g, '').replace(/\(2液\)/g, '');
+          const blob = [
+            prod.name,
+            baseName,
+            prod.id,
+            code,
+            mfr.name,
+            mfrId,
+            type.label,
+            type.category === 'water' ? '水性 すいせい' : '弱溶剤 溶剤 ようざい',
+            typeId.includes('1') ? '1液 いちえき' : '2液 にえき',
+            productKeywordExtra[prod.id] || '',
+          ].join(' ');
+          productCatalog.push({
+            mfrId,
+            typeId,
+            product: prod,
+            productCode: code,
+            searchText: blob,
+          });
+        });
+      });
+    });
+
+    function norm(s) {
+      return String(s || '')
+        .normalize('NFKC')
+        .toLowerCase()
+        .replace(/[\u3041-\u3096]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) + 0x60))
+        .replace(/[\s\-_・．.,/\\（）()[\]「」【】『』：:;；]/g, '');
+    }
+
+    function searchProducts(query, limit = 14) {
+      const q = norm(query);
+      if (!q || q.length < 1) return [];
+      const scored = [];
+      productCatalog.forEach((entry) => {
+        const hay = norm(entry.searchText);
+        const codeNorm = norm(entry.productCode);
+        const nameNorm = norm(entry.product.name);
+        const idNorm = norm(entry.product.id);
+        let score = 0;
+        if (codeNorm === q || idNorm === q) score = 100;
+        else if (codeNorm.includes(q) || idNorm.includes(q)) score = 80;
+        else if (nameNorm.startsWith(q)) score = 70;
+        else if (hay.includes(q)) score = 50;
+        else if (q.length >= 2 && hay.includes(q.slice(0, Math.min(q.length, 6)))) score = 40;
+        if (score > 0) scored.push({ entry, score });
+      });
+      scored.sort((a, b) => b.score - a.score || a.entry.product.name.localeCompare(b.entry.product.name));
+      return scored.slice(0, limit).map((s) => s.entry);
+    }
+
+    function resolveSelection(mfrId, typeId, productId, colorId) {
+      const mfr = manufacturers[mfrId];
+      const type = types.find((t) => t.id === typeId);
+      const product = getProducts(mfrId, typeId).find((p) => p.id === productId);
+      const color = colorByKey.get(colorId);
+      if (!mfr || !type || !product || !color) return null;
+      return {
+        mfrId,
+        mfr,
+        typeId,
+        type,
+        product,
+        color,
+        code: color.code,
+        name: color.name,
+        lab: color.lab,
+        category: type.category,
+        label: `${product.name} / ${color.code}`,
+      };
+    }
+
+    return {
+      manufacturers,
+      types,
+      products,
+      colorSystems,
+      colorByKey,
+      totalColors,
+      productCatalog,
+      getProducts,
+      getColorsForProduct,
+      searchProducts,
+      resolveSelection,
+    };
+  })();
+
+  /** 検索正規化：大小・かな・半角カナ・記号を統一 */
+  function normalizeSearchText(s) {
     return String(s || '')
+      .normalize('NFKC')
       .toLowerCase()
-      .replace(/[\s\-_・．.]/g, '')
-      .replace(/[Ａ-Ｚａ-ｚ０-９]/g, (ch) =>
-        String.fromCharCode(ch.charCodeAt(0) - 0xfee0)
-      );
+      .replace(/[\u3041-\u3096]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) + 0x60))
+      .replace(/[\s\-_・．.,/\\（）()[\]「」【】『』：:;；]/g, '');
   }
 
-  function deltaE(lab1, lab2) {
-    return Math.sqrt(
-      (lab1.L - lab2.L) ** 2 +
-      (lab1.a - lab2.a) ** 2 +
-      (lab1.b - lab2.b) ** 2
-    );
+  // ═══════════════════════════════════════════════════════════════
+  // 計算エンジン（KM + 乾燥補正）
+  // ═══════════════════════════════════════════════════════════════
+  function deltaE(l1, l2) {
+    return Math.sqrt((l1.L - l2.L) ** 2 + (l1.a - l2.a) ** 2 + (l1.b - l2.b) ** 2);
   }
 
   function labToRgb(L, a, b) {
     const fy = (L + 16) / 116;
     const fx = a / 500 + fy;
     const fz = fy - b / 200;
-    const fInv = (t) => {
-      const t3 = t ** 3;
-      return t3 > 0.008856 ? t3 : (t - 16 / 116) / 7.787;
-    };
-    let X = 95.047 * fInv(fx);
-    let Y = 100.0 * fInv(fy);
-    let Z = 108.883 * fInv(fz);
-    X /= 100; Y /= 100; Z /= 100;
-    let r = X * 3.2406 + Y * -1.5372 + Z * -0.4986;
-    let g = X * -0.9689 + Y * 1.8758 + Z * 0.0415;
-    let bl = X * 0.0557 + Y * -0.204 + Z * 1.057;
-    const gamma = (u) =>
-      u <= 0.0031308 ? 12.92 * u : 1.055 * u ** (1 / 2.4) - 0.055;
-    r = Math.round(Math.min(255, Math.max(0, gamma(r) * 255)));
-    g = Math.round(Math.min(255, Math.max(0, gamma(g) * 255)));
-    bl = Math.round(Math.min(255, Math.max(0, gamma(bl) * 255)));
-    return `rgb(${r},${g},${bl})`;
+    const fI = (t) => (t ** 3 > 0.008856 ? t ** 3 : (t - 16 / 116) / 7.787);
+    let X = 95.047 * fI(fx) / 100, Y = 100 * fI(fy) / 100, Z = 108.883 * fI(fz) / 100;
+    const lin = (u) => (u <= 0.0031308 ? 12.92 * u : 1.055 * u ** (1 / 2.4) - 0.055);
+    const ch = (c) => Math.round(Math.min(255, Math.max(0, lin(c) * 255)));
+    return `rgb(${ch(X * 3.2406 + Y * -1.5372 + Z * -0.4986)},${ch(X * -0.9689 + Y * 1.8758 + Z * 0.0415)},${ch(X * 0.0557 + Y * -0.204 + Z * 1.057)})`;
   }
 
-  function typeLabel(type) {
-    return type === TYPE.WATER ? '水性' : '弱溶剤';
-  }
-
-  function isIncompatible(t1, t2) {
-    return t1 !== t2;
-  }
-
-  // ─── Kubelka-Munk helpers ─────────────────────────────────────
   function reflectanceFromL(L) {
-    const Y = ((L + 16) / 116) ** 3 > 0.008856
-      ? ((L + 16) / 116) ** 3
-      : L / 903.3;
+    const Y = ((L + 16) / 116) ** 3 > 0.008856 ? ((L + 16) / 116) ** 3 : L / 903.3;
     return Math.min(0.99, Math.max(0.005, Y));
   }
 
@@ -439,292 +634,350 @@
   function ksFromR(R) {
     if (R <= 0.005) return 500;
     if (R >= 0.995) return 0.001;
-    return ((1 - R) ** 2) / (2 * R);
+    return (1 - R) ** 2 / (2 * R);
   }
 
   function RFromKS(ks) {
-    if (ks <= 0) return 0.99;
-    return 1 + ks - Math.sqrt(ks ** 2 + 2 * ks);
+    return ks <= 0 ? 0.99 : 1 + ks - Math.sqrt(ks ** 2 + 2 * ks);
   }
 
-  /** KM mix: weighted K/S of base film + black toner */
-  function predictLabWithBlack(currentLab, blackG, baseG, mfr) {
+  function predictLabWithBlack(lab, blackG, baseG, mfr) {
     const total = baseG + blackG;
-    if (total <= 0) return { ...currentLab };
-
-    const fBlack = blackG / total;
-    const fBase = baseG / total;
-
-    const R0 = reflectanceFromL(currentLab.L);
-    const KS0 = ksFromR(R0) * (1 / mfr.baseRatio);
-
+    if (total <= 0) return { ...lab };
+    const fB = blackG / total;
+    const R0 = reflectanceFromL(lab.L);
+    const KS0 = ksFromR(R0) / mfr.baseRatio;
     const KSblack = mfr.blackKS * mfr.blackTint;
     const KSwhite = mfr.whiteKS * mfr.baseRatio;
-
-    const KSbase = KS0 * fBase + KSwhite * fBase * 0.15;
-    const KSmix = KSbase * (1 - fBlack) + KSblack * fBlack;
-
-    const Rmix = RFromKS(KSmix);
-    const newL = LFromReflectance(Rmix);
-
-    const chromaAtten = 1 - fBlack * mfr.blackTint * 0.62;
-    const a = currentLab.a * chromaAtten;
-    const b = currentLab.b * chromaAtten;
-
-    return { L: newL, a, b };
+    const KSmix = (KS0 * (1 - fB) + KSwhite * 0.12) * (1 - fB) + KSblack * fB;
+    const newL = LFromReflectance(RFromKS(KSmix));
+    const att = 1 - fB * mfr.blackTint * 0.62;
+    return { L: newL, a: lab.a * att, b: lab.b * att };
   }
 
-  /** 水性: 乾燥後 L* 5% 低下 → 調色時は目標を「湿り状態」で高めに設定 */
-  function effectiveTargetLab(targetLab, involvesWater) {
-    if (!involvesWater) return { ...targetLab };
-    return {
-      L: Math.min(100, targetLab.L / DRYING_L_FACTOR),
-      a: targetLab.a,
-      b: targetLab.b,
-    };
+  function effectiveTargetLab(lab, involvesWater) {
+    if (!involvesWater) return { ...lab };
+    return { L: Math.min(100, lab.L / DRYING_L_FACTOR), a: lab.a, b: lab.b };
   }
 
-  function dryingNote(current, target) {
-    const w =
-      current.type === TYPE.WATER ||
-      target.type === TYPE.WATER;
-    if (!w) return '補正なし（溶剤系）';
-    return `水性 L*×${DRYING_L_FACTOR} 乾燥補正済`;
-  }
-
-  /** 0.01g 刻み逆算 */
-  function calculateBlackToner(current, target, baseG, mfr) {
+  function calculateBlackToner(current, target, baseG) {
+    const mfr = current.mfr;
     const involvesWater =
-      current.type === TYPE.WATER || target.type === TYPE.WATER;
-    const effTarget = effectiveTargetLab(target.lab, involvesWater);
-
-    const maxBlack = Math.min(baseG * 0.35, 200);
-    let bestG = 0;
-    let bestDE = deltaE(current.lab, effTarget);
-    let bestLab = { ...current.lab };
-
+      current.category === CATEGORY.WATER || target.category === CATEGORY.WATER;
+    const eff = effectiveTargetLab(target.lab, involvesWater);
+    const maxBlack = Math.min(baseG * 0.35, 250);
+    let bestG = 0, bestDE = deltaE(current.lab, eff), bestLab = { ...current.lab };
     for (let g = 0; g <= maxBlack + 0.001; g += 0.01) {
-      const rounded = Math.round(g * 100) / 100;
-      const lab = predictLabWithBlack(current.lab, rounded, baseG, mfr);
-      const de = deltaE(lab, effTarget);
-      if (de < bestDE) {
-        bestDE = de;
-        bestG = rounded;
-        bestLab = lab;
-      }
+      const rg = Math.round(g * 100) / 100;
+      const lab = predictLabWithBlack(current.lab, rg, baseG, mfr);
+      const de = deltaE(lab, eff);
+      if (de < bestDE) { bestDE = de; bestG = rg; bestLab = lab; }
     }
-
-    const dryLab =
-      involvesWater
-        ? {
-            L: bestLab.L * DRYING_L_FACTOR,
-            a: bestLab.a,
-            b: bestLab.b,
-          }
-        : bestLab;
-
-    const dryDE = deltaE(dryLab, target.lab);
-
+    const dryLab = involvesWater
+      ? { L: bestLab.L * DRYING_L_FACTOR, a: bestLab.a, b: bestLab.b }
+      : bestLab;
     return {
       blackGrams: bestG,
-      deltaE: bestDE,
-      dryDeltaE: dryDE,
+      dryDeltaE: deltaE(dryLab, target.lab),
       predictedWet: bestLab,
       predictedDry: dryLab,
-      effectiveTarget: effTarget,
+      effectiveTarget: eff,
       involvesWater,
     };
   }
 
-  // ─── Search ───────────────────────────────────────────────────
-  function searchColors(query, limit = 12) {
-    const q = normalizeCode(query);
-    if (!q) return [];
-
-    const exact = NORM_LOOKUP.get(q);
-    const results = [];
-    const seen = new Set();
-
-    if (exact) {
-      results.push(exact);
-      seen.add(exact.idx);
-    }
-
-    for (const col of COLOR_INDEX) {
-      if (results.length >= limit) break;
-      if (seen.has(col.idx)) continue;
-      const codeMatch = col.norm.includes(q);
-      const nameMatch = col.name.includes(query);
-      if (codeMatch || nameMatch) {
-        results.push(col);
-        seen.add(col.idx);
-      }
-    }
-    return results.slice(0, limit);
+  function isIncompatible(a, b) {
+    return a && b && a.category !== b.category;
   }
 
-  // ─── DOM refs ─────────────────────────────────────────────────
+  // ═══════════════════════════════════════════════════════════════
+  // 階層セレクト UI
+  // ═══════════════════════════════════════════════════════════════
   const $ = (id) => document.getElementById(id);
+  const state = { current: null, target: null };
 
-  const state = {
-    current: null,
-    target: null,
+  function selectRow(label, id, disabled) {
+    return `
+      <label class="block">
+        <span class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1 block">${label}</span>
+        <select id="${id}" class="native-select" ${disabled ? 'disabled' : ''}>
+          <option value="">選択してください</option>
+        </select>
+      </label>`;
+  }
+
+  function buildPicker(containerId, prefix) {
+    const el = $(containerId);
+    el.innerHTML = `
+      <label class="block relative" id="${prefix}-search-wrap">
+        <span class="text-xs font-bold text-amber-400/90 mb-1 block">🔍 製品名・製品番号を入力検索</span>
+        <input
+          type="search"
+          id="${prefix}-product-search"
+          autocomplete="off"
+          enterkeyhint="search"
+          placeholder="例: パーフェクト / クリーンマイルド / 1液 / NP-PT"
+          class="product-search-input font-sans"
+        />
+        <div
+          id="${prefix}-product-suggest"
+          class="product-suggest hidden absolute z-50 left-0 right-0 mt-1 bg-slate-800 border-2 border-amber-500/40 rounded-xl shadow-2xl"
+          role="listbox"
+        ></div>
+      </label>
+      <p class="text-[10px] text-slate-500 text-center">または下の4段階から選択</p>
+      ${selectRow('1. メーカー', `${prefix}-mfr`)}
+      ${selectRow('2. 性質', `${prefix}-type`, true)}
+      ${selectRow('3. 製品名', `${prefix}-product`, true)}
+      ${selectRow('4. 色番号', `${prefix}-color`, true)}
+    `;
+    return {
+      search: $(`${prefix}-product-search`),
+      suggest: $(`${prefix}-product-suggest`),
+      searchWrap: $(`${prefix}-search-wrap`),
+      mfr: $(`${prefix}-mfr`),
+      type: $(`${prefix}-type`),
+      product: $(`${prefix}-product`),
+      color: $(`${prefix}-color`),
+    };
+  }
+
+  const pickers = {
+    current: buildPicker('current-picker', 'current'),
+    target: buildPicker('target-picker', 'target'),
   };
 
-  const currentInput = $('current-input');
-  const targetInput = $('target-input');
-  const currentSuggest = $('current-suggest');
-  const targetSuggest = $('target-suggest');
-  const calcBtn = $('calc-btn');
-  const compatWarning = $('compat-warning');
-  const compatDetail = $('compat-detail');
-  const resultPanel = $('result-panel');
+  function fillOptions(sel, items, valueKey, labelFn, placeholder) {
+    sel.innerHTML = `<option value="">${placeholder || '選択してください'}</option>`;
+    items.forEach((item) => {
+      const opt = document.createElement('option');
+      opt.value = item[valueKey];
+      opt.textContent = labelFn(item);
+      sel.appendChild(opt);
+    });
+    sel.disabled = items.length === 0;
+  }
 
-  function renderSuggest(container, items, onPick) {
+  function resetDown(picker, from) {
+    const order = ['type', 'product', 'color'];
+    const start = order.indexOf(from);
+    for (let i = start; i < order.length; i++) {
+      const key = order[i];
+      picker[key].innerHTML = '<option value="">選択してください</option>';
+      picker[key].disabled = true;
+      picker[key].value = '';
+    }
+  }
+
+  /** 製品検索から階層セレクトを同期 */
+  function syncProductToPicker(picker, entry, focusColor) {
+    const { mfrId, typeId, product } = entry;
+    const mfr = ColorDatabase.manufacturers[mfrId];
+    const type = ColorDatabase.types.find((t) => t.id === typeId);
+
+    picker.mfr.value = mfrId;
+    fillOptions(picker.type, ColorDatabase.types, 'id', (t) => t.label);
+    picker.type.disabled = false;
+    picker.type.value = typeId;
+
+    const prods = ColorDatabase.getProducts(mfrId, typeId);
+    fillOptions(picker.product, prods, 'id', (x) => x.name);
+    picker.product.disabled = false;
+    picker.product.value = product.id;
+
+    const colors = ColorDatabase.getColorsForProduct(product);
+    fillOptions(picker.color, colors, 'id', (c) => c.display);
+    picker.color.disabled = false;
+    picker.color.value = '';
+
+    if (focusColor) {
+      setTimeout(() => {
+        picker.color.focus();
+        try { picker.color.click(); } catch (_) { /* iOS */ }
+      }, 80);
+    }
+    return { mfr, type, product };
+  }
+
+  function renderProductSuggest(container, items, onPick) {
     if (!items.length) {
       container.classList.add('hidden');
       container.innerHTML = '';
       return;
     }
-    container.innerHTML = items
-      .map((col) => {
-        const mfr = MANUFACTURERS[col.mfrId];
-        const bg = labToRgb(col.lab.L, col.lab.a, col.lab.b);
-        return `
-          <button type="button" class="suggest-item w-full flex items-center gap-3 px-4 py-3 border-b border-slate-700 last:border-0 text-left hover:bg-slate-700/50"
-            data-idx="${col.idx}">
-            <span class="lab-swatch w-10 h-10 rounded-lg shrink-0" style="background:${bg}"></span>
-            <span class="flex-1 min-w-0">
-              <span class="font-mono font-bold text-base block">${col.code}</span>
-              <span class="text-sm text-slate-400">${col.name} · ${mfr.badge} · ${typeLabel(col.type)}</span>
-            </span>
-          </button>`;
-      })
-      .join('');
+    container.innerHTML = items.map((entry) => {
+      const mfr = ColorDatabase.manufacturers[entry.mfrId];
+      const type = ColorDatabase.types.find((t) => t.id === entry.typeId);
+      const badge =
+        entry.mfrId === 'nippon' ? '日塗' : entry.mfrId === 'kansai' ? '関西' : 'SK';
+      return `
+        <button type="button" role="option"
+          class="product-suggest-item w-full text-left px-4 py-3 border-b border-slate-700 last:border-0 hover:bg-slate-700/60"
+          data-mfr="${entry.mfrId}" data-type="${entry.typeId}" data-product="${entry.product.id}">
+          <span class="font-bold text-base block text-slate-100">${entry.product.name}</span>
+          <span class="text-xs text-slate-400 mt-0.5 block">
+            ${badge} · ${type.label} · <span class="font-mono">${entry.productCode}</span>
+          </span>
+        </button>`;
+    }).join('');
     container.classList.remove('hidden');
     container.querySelectorAll('button').forEach((btn) => {
       btn.addEventListener('click', () => {
-        const col = COLOR_INDEX[Number(btn.dataset.idx)];
-        onPick(col);
+        const entry = ColorDatabase.productCatalog.find(
+          (e) => e.mfrId === btn.dataset.mfr
+            && e.typeId === btn.dataset.type
+            && e.product.id === btn.dataset.product,
+        );
+        if (entry) onPick(entry);
         container.classList.add('hidden');
       });
     });
   }
 
-  function showSelected(which, col) {
-    const mfr = MANUFACTURERS[col.mfrId];
-    const bg = labToRgb(col.lab.L, col.lab.a, col.lab.b);
-    const prefix = which === 'current' ? 'current' : 'target';
+  function wireProductSearch(picker, prefix, stateKey) {
+    const { search, suggest, searchWrap } = picker;
 
-    $(`${prefix}-selected`).classList.remove('hidden');
-    $(`${prefix}-swatch`).style.background = bg;
-    $(`${prefix}-label`).innerHTML =
-      `<span class="${mfr.colorClass}">${col.code}</span> ${col.name}`;
-    $(`${prefix}-meta`).textContent =
-      `${mfr.name} · L*${col.lab.L.toFixed(1)} a*${col.lab.a.toFixed(1)} b*${col.lab.b.toFixed(1)} · ${typeLabel(col.type)}`;
-    $(`${prefix}-input`).value = col.code;
+    search.addEventListener('input', () => {
+      const q = search.value.trim();
+      if (!q) {
+        suggest.classList.add('hidden');
+        return;
+      }
+      renderProductSuggest(suggest, ColorDatabase.searchProducts(q), (entry) => {
+        syncProductToPicker(picker, entry, true);
+        search.value = entry.product.name;
+        updateSelection(prefix, stateKey);
+      });
+    });
+
+    search.addEventListener('focus', () => {
+      const q = search.value.trim();
+      if (q) {
+        renderProductSuggest(suggest, ColorDatabase.searchProducts(q), (entry) => {
+          syncProductToPicker(picker, entry, true);
+          search.value = entry.product.name;
+          updateSelection(prefix, stateKey);
+        });
+      }
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!searchWrap.contains(e.target)) suggest.classList.add('hidden');
+    });
   }
 
-  function clearSelected(which) {
-    const prefix = which === 'current' ? 'current' : 'target';
-    state[which] = null;
-    $(`${prefix}-selected`).classList.add('hidden');
-    $(`${prefix}-input`).value = '';
+  function wirePicker(prefix, stateKey) {
+    const p = pickers[prefix];
+    const preview = $(`${prefix}-preview`);
+    const swatch = $(`${prefix}-swatch`);
+    const title = $(`${prefix}-preview-title`);
+    const meta = $(`${prefix}-preview-meta`);
+
+    fillOptions(
+      p.mfr,
+      Object.values(ColorDatabase.manufacturers),
+      'id',
+      (m) => m.name,
+    );
+
+    p.mfr.addEventListener('change', () => {
+      resetDown(p, 'type');
+      if (!p.mfr.value) { updateSelection(prefix, stateKey); return; }
+      fillOptions(p.type, ColorDatabase.types, 'id', (t) => t.label);
+      p.type.disabled = false;
+      updateSelection(prefix, stateKey);
+    });
+
+    p.type.addEventListener('change', () => {
+      resetDown(p, 'product');
+      if (!p.type.value) { updateSelection(prefix, stateKey); return; }
+      const prods = ColorDatabase.getProducts(p.mfr.value, p.type.value);
+      fillOptions(p.product, prods, 'id', (x) => x.name);
+      p.product.disabled = false;
+      updateSelection(prefix, stateKey);
+    });
+
+    p.product.addEventListener('change', () => {
+      p.color.innerHTML = '<option value="">選択してください</option>';
+      p.color.disabled = true;
+      p.color.value = '';
+      if (!p.product.value) { updateSelection(prefix, stateKey); return; }
+      const prod = ColorDatabase.getProducts(p.mfr.value, p.type.value)
+        .find((x) => x.id === p.product.value);
+      const colors = ColorDatabase.getColorsForProduct(prod);
+      fillOptions(p.color, colors, 'id', (c) => c.display);
+      p.color.disabled = false;
+      updateSelection(prefix, stateKey);
+    });
+
+    p.color.addEventListener('change', () => updateSelection(prefix, stateKey));
+
+    wireProductSearch(p, prefix, stateKey);
+  }
+
+  function updateSelection(prefix, stateKey) {
+    const p = pickers[prefix];
+    const sel = ColorDatabase.resolveSelection(
+      p.mfr.value, p.type.value, p.product.value, p.color.value,
+    );
+    state[stateKey] = sel;
+
+    const preview = $(`${prefix}-preview`);
+    if (sel) {
+      preview.classList.remove('hidden');
+      $(`${prefix}-swatch`).style.background = labToRgb(sel.lab.L, sel.lab.a, sel.lab.b);
+      $(`${prefix}-preview-title`).textContent = `${sel.product.name} · ${sel.code}`;
+      $(`${prefix}-preview-meta`).textContent =
+        `${sel.mfr.name} / ${sel.type.label} / L*${sel.lab.L} a*${sel.lab.a} b*${sel.lab.b}`;
+    } else {
+      preview.classList.add('hidden');
+    }
     updateUI();
   }
 
-  function wireSearch(inputEl, suggestEl, key) {
-    inputEl.addEventListener('input', () => {
-      const q = inputEl.value.trim();
-      if (!q) {
-        suggestEl.classList.add('hidden');
-        return;
-      }
-      renderSuggest(suggestEl, searchColors(q), (col) => {
-        state[key] = col;
-        showSelected(key, col);
-        updateUI();
-      });
-    });
-
-    inputEl.addEventListener('focus', () => {
-      const q = inputEl.value.trim();
-      if (q) renderSuggest(suggestEl, searchColors(q), (col) => {
-        state[key] = col;
-        showSelected(key, col);
-        updateUI();
-      });
-    });
-  }
-
-  document.addEventListener('click', (e) => {
-    if (!e.target.closest('#current-search-wrap')) currentSuggest.classList.add('hidden');
-    if (!e.target.closest('#target-search-wrap')) targetSuggest.classList.add('hidden');
-  });
-
-  wireSearch(currentInput, currentSuggest, 'current');
-  wireSearch(targetInput, targetSuggest, 'target');
-
-  $('current-clear').addEventListener('click', () => clearSelected('current'));
-  $('target-clear').addEventListener('click', () => clearSelected('target'));
-
   function updateUI() {
     const { current, target } = state;
-    const incompatible =
-      current && target && isIncompatible(current.type, target.type);
-
-    if (incompatible) {
-      compatWarning.classList.remove('hidden');
-      compatDetail.textContent =
-        `現状: ${typeLabel(current.type)}（${current.code}）↔ 目標: ${typeLabel(target.type)}（${target.code}）`;
-    } else {
-      compatWarning.classList.add('hidden');
-    }
+    const bad = isIncompatible(current, target);
+    const warn = $('compat-warning');
+    if (bad) {
+      warn.classList.remove('hidden');
+      $('compat-detail').textContent =
+        `${current.type.label}（${current.product.name}）↔ ${target.type.label}（${target.product.name}）`;
+    } else warn.classList.add('hidden');
 
     const mass = parseFloat($('mass-input').value);
-    const massOk = Number.isFinite(mass) && mass > 0;
-
-    const canCalc = current && target && !incompatible && massOk;
-    calcBtn.disabled = !canCalc;
-    if (!canCalc) resultPanel.classList.add('hidden');
+    const ok = current && target && !bad && mass > 0;
+    $('calc-btn').disabled = !ok;
+    if (!ok) $('result-panel').classList.add('hidden');
   }
 
+  wirePicker('current', 'current');
+  wirePicker('target', 'target');
   $('mass-input').addEventListener('input', updateUI);
 
-  calcBtn.addEventListener('click', () => {
+  $('calc-btn').addEventListener('click', () => {
     const { current, target } = state;
     if (!current || !target) return;
-
     const baseG = parseFloat($('mass-input').value);
-    if (!Number.isFinite(baseG) || baseG <= 0) return;
-
-    const mfr = MANUFACTURERS[current.mfrId];
-    const result = calculateBlackToner(current, target, baseG, mfr);
-
-    $('result-grams').textContent = result.blackGrams.toFixed(2);
-    $('result-de').textContent = result.dryDeltaE.toFixed(2);
-    $('result-dry').textContent = dryingNote(current, target);
-
-    const pct = ((result.blackGrams / (baseG + result.blackGrams)) * 100).toFixed(2);
+    const r = calculateBlackToner(current, target, baseG);
+    $('result-grams').textContent = r.blackGrams.toFixed(2);
+    $('result-de').textContent = r.dryDeltaE.toFixed(2);
+    $('result-dry').textContent = r.involvesWater
+      ? `水性 L*×${DRYING_L_FACTOR} 補正済` : '補正なし';
+    const pct = ((r.blackGrams / (baseG + r.blackGrams)) * 100).toFixed(2);
     $('result-detail').innerHTML = [
-      `現状 L*a*b*: ${current.lab.L.toFixed(1)}, ${current.lab.a.toFixed(1)}, ${current.lab.b.toFixed(1)}`,
-      `目標 L*a*b*: ${target.lab.L.toFixed(1)}, ${target.lab.a.toFixed(1)}, ${target.lab.b.toFixed(1)}`,
-      result.involvesWater
-        ? `湿り換算目標 L*: ${result.effectiveTarget.L.toFixed(1)}（乾燥後 ≈ ${target.lab.L.toFixed(1)}）`
-        : '',
-      `白ベース比重: ${mfr.baseRatio} · 黒着色力: ${mfr.blackTint}`,
-      `予測（湿）L*a*b*: ${result.predictedWet.L.toFixed(1)}, ${result.predictedWet.a.toFixed(1)}, ${result.predictedWet.b.toFixed(1)}`,
-      result.involvesWater
-        ? `予測（乾）L*a*b*: ${result.predictedDry.L.toFixed(1)}, ${result.predictedDry.a.toFixed(1)}, ${result.predictedDry.b.toFixed(1)}`
-        : '',
-      `黒トナー比率: ${pct}% / 総量 ${(baseG + result.blackGrams).toFixed(2)}g`,
-    ]
-      .filter(Boolean)
-      .join('<br>');
-
-    resultPanel.classList.remove('hidden');
-    resultPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      `現状: ${current.code} L*${current.lab.L.toFixed(1)} a*${current.lab.a.toFixed(1)} b*${current.lab.b.toFixed(1)}`,
+      `目標: ${target.code} L*${target.lab.L.toFixed(1)} a*${target.lab.a.toFixed(1)} b*${target.lab.b.toFixed(1)}`,
+      r.involvesWater ? `湿り目標 L*: ${r.effectiveTarget.L.toFixed(1)}` : '',
+      `製品: ${current.product.name} → ${target.product.name}`,
+      `予測（乾）ΔE: ${r.dryDeltaE.toFixed(2)} / 黒比率 ${pct}%`,
+    ].filter(Boolean).join('<br>');
+    $('result-panel').classList.remove('hidden');
+    $('result-panel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   });
+
+  $('db-stats').textContent =
+    `IRO-HACK v2.1 · 色 ${ColorDatabase.totalColors.toLocaleString()} · 製品 ${ColorDatabase.productCatalog.length} · 検索対応`;
 
   updateUI();
 })();
